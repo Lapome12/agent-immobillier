@@ -1,0 +1,81 @@
+# Un tour de prospection chaque lundi matin, puis publication du rapport sur GitHub Pages.
+# Prérequis : secret CLAUDE_CODE_OAUTH_TOKEN (ton abonnement Claude, créé avec `claude setup-token`)
+# ou ANTHROPIC_API_KEY (Settings > Secrets and variables > Actions)
+# et Pages activé avec la source « GitHub Actions » (Settings > Pages), facultatif.
+name: Immobilier
+
+on:
+  schedule:
+    - cron: "0 5 * * 1"   # lundi 5h UTC (7h à Paris en été)
+  workflow_dispatch:
+    inputs:
+      tour:
+        description: "Jouer un tour de prospection avant de publier"
+        type: boolean
+        default: true
+  push:
+    branches: [main]
+    paths: ["immo/report.py", "immo/config.py"]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: immobilier
+  cancel-in-progress: false
+
+jobs:
+  tour:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.tour)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Installer Claude Code (pour utiliser l'abonnement Claude)
+        run: npm install -g @anthropic-ai/claude-code
+      - name: Vérifier la forme du jeton (sans l'afficher)
+        run: |
+          python -c "import os; t=os.environ.get('CLAUDE_CODE_OAUTH_TOKEN',''); print('longueur:', len(t), '| commence par sk-ant-oat01-:', t.strip().startswith('sk-ant-oat01-'), '| espaces ou retours a la ligne:', any(c.isspace() for c in t))"
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      - name: Tour de prospection (investissement fictif)
+        run: python main.py live
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      - name: Sauvegarder l'état de la partie
+        run: |
+          git config user.name "immo-bot"
+          git config user.email "immo-bot@users.noreply.github.com"
+          git add runs/live
+          git commit -m "Tour immobilier $(date -u +%Y-%m-%d)" || echo "Rien à sauvegarder"
+          git push
+
+  deploy:
+    needs: tour
+    if: always() && needs.tour.result != 'failure' && needs.tour.result != 'cancelled'
+    runs-on: ubuntu-latest
+    continue-on-error: true   # le site GitHub Pages est facultatif (le rapport est aussi dans runs/live/)
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pydantic
+      - run: python main.py export --out _site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
