@@ -70,24 +70,27 @@ function propRow(p) {
   const note = p.note != null ? `<b class="score">${Math.round(p.note)}/10</b>${verdict}` : `<span class="muted small">pas encore notée</span>`;
   const m2 = p.prix_m2 ? `${money(p.prix_m2)}/m²<span class="muted small">ventes DVF ${money(p.mediane_m2)}/m²${p.prix_m2_constate ? `<br>selon ${esc(agents.manager.name)} ${money(p.prix_m2_constate)}/m²` : ""}</span>` : "-";
   const avis = [p.avis_quartier, p.correction].filter(Boolean).map(esc).join(" ");
-  return `<tr>
+  return `<tbody class="prop"><tr>
     <td><span class="cat cat-${esc(p.categorie)}">${LIBELLES[p.categorie] || esc(p.categorie)}</span></td>
     <td>${link(p)}<span class="muted small">${esc(p.commune)}${p.quartier ? " · " + esc(p.quartier) : ""} · ${Math.round(p.surface_m2 || 0)} m² · DPE ${esc(p.dpe)}</span>
-      ${p.pourquoi ? `<span class="small">${esc(p.pourquoi)}</span>` : ""}${p.motif ? `<span class="small down">⚠ ${esc(p.motif)}</span>` : ""}</td>
+      ${p.motif ? `<span class="small down">⚠ ${esc(p.motif)}</span>` : ""}</td>
     <td class="num">${money(p.prix || 0)}${p.travaux_estimes ? `<span class="muted small">+ travaux ${money(p.travaux_estimes)}</span>` : ""}</td>
     <td class="num">${m2}</td>
     <td class="num">${p.rendement_net != null ? (p.rendement_net * 100).toFixed(1) + " %" : "-"}${p.loyer_retenu ? `<span class="muted small">${money(p.loyer_retenu)}/mois</span>` : ""}</td>
-    <td>${note}</td>
-    <td class="small">${avis || "-"}</td></tr>`;
+    <td>${note}</td></tr>
+    <tr class="detail"><td></td><td colspan="5">
+      ${p.pourquoi ? `<details class="small"><summary>Argumentaire de ${esc(agents.agents[p.agent_key]?.name || "l'agent")}</summary><p>${esc(p.pourquoi)}</p>${p.risques ? `<p class="muted">Risques : ${esc(p.risques)}</p>` : ""}</details>` : ""}
+      ${avis ? `<p class="small hel"><b>${esc(agents.manager.name)} :</b> ${avis}</p>` : ""}
+    </td></tr></tbody>`;
 }
 
 function renderPropositions() {
   $("propositions").innerHTML = ranking().map((k) => {
     const a = agents.agents[k], t = state.agents[k];
-    const rows = t.propositions.map(propRow).join("");
+    const rows = t.propositions.map((p) => propRow({ ...p, agent_key: k })).join("");
     return `<div class="block" style="--c:${COLORS[k]}">
       <div class="block-head"><div class="avatar">${a.emoji}</div><div><b>${esc(a.name)}</b><div class="muted small">${esc(a.zone)}</div></div></div>
-      ${rows ? `<div class="table-wrap"><table><tr><th>Catégorie</th><th>Annonce</th><th>Prix</th><th>Prix au m²</th><th>Rendement net</th><th>Note</th><th>Avis et correction d'${esc(agents.manager.name)}</th></tr>${rows}</table></div>`
+      ${rows ? `<div class="table-wrap"><table><thead><tr><th>Catégorie</th><th>Annonce</th><th>Prix</th><th>Prix au m²</th><th>Rendement net</th><th>Note d'${esc(agents.manager.name)}</th></tr></thead>${rows}</table></div>`
         : `<p class="muted">Aucune proposition cette semaine.</p>`}
       ${t.feedback ? `<p class="small"><b>Retour d'${esc(agents.manager.name)} :</b> ${esc(t.feedback)}</p>` : ""}
     </div>`;

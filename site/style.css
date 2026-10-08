@@ -72,4 +72,10 @@ td a{color:var(--accent)} td .small{display:block} .num{font-family:var(--mono);
 .score{display:block;font-size:16px}
 #coup .review{border-left:4px solid var(--manager);margin-top:20px}
 td .small{display:block;margin-top:2px}
-.block td:nth-child(2){min-width:240px} .block td:last-child{min-width:220px}
+.block td:nth-child(2){min-width:220px}
+.prop tr:first-child td{border-bottom:0;padding-bottom:2px}
+.prop .detail td{padding-top:0}
+.prop .detail p{margin:2px 0;max-width:80ch}
+.hel{border-left:3px solid var(--manager);padding-left:8px}
+.chip{white-space:nowrap}
+.prop details summary{cursor:pointer;color:var(--muted)}
