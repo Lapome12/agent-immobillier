@@ -54,7 +54,7 @@ def build_artifact(state_dir, out):
 
 
 def main():
-    p = argparse.ArgumentParser(description="5 agents de recherche immobilière IA en compétition + 1 directrice d'investissement.")
+    p = argparse.ArgumentParser(description="4 agents de recherche immobilière IA en compétition + 1 directrice d'investissement.")
     p.add_argument("mode", choices=["sim", "live", "report", "export", "artifact"],
                    help="sim : marché et annonces simulés · live : un tour sur les vrais prix DVF et de vraies annonces "
                         "(à lancer chaque semaine) · report : régénère le rapport · export : prépare le site (dossier --out) · "

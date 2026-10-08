@@ -7,7 +7,7 @@ from pathlib import Path
 from . import config
 from .config import display
 
-COLORS = {"hyeres": "#d9781c", "grenoble": "#2a78d6", "station": "#23915a", "giens": "#0f8f9c", "renovation": "#8e4fb3"}
+COLORS = {"hyeres": "#d9781c", "grenoble": "#2a78d6", "station": "#23915a", "renovation": "#8e4fb3"}
 LIBELLES = {"chere": "La plus chère", "pas_chere": "La moins chère", "bon_plan": "Bon plan", "choix_agent": "Choix de l'agent"}
 esc = lambda s: html.escape(str(s if s is not None else ""))
 eur = lambda x: f"{x:,.0f} €".replace(",", " ")

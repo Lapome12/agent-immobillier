@@ -3,7 +3,7 @@
 
 const KEY_STORAGE = "immo-anthropic-key";
 const CHAT_MODEL = "claude-opus-5-5";
-const COLORS = { hyeres: "var(--hyeres)", grenoble: "var(--grenoble)", station: "var(--station)", giens: "var(--giens)", renovation: "var(--renovation)", manager: "var(--manager)" };
+const COLORS = { hyeres: "var(--hyeres)", grenoble: "var(--grenoble)", station: "var(--station)", renovation: "var(--renovation)", manager: "var(--manager)" };
 const LIBELLES = { chere: "La plus chère", pas_chere: "La moins chère", bon_plan: "Bon plan", choix_agent: "Choix de l'agent" };
 const VERDICTS = { "validée": "good", "à revoir": "warn", "rejetée": "bad" };
 
@@ -176,7 +176,7 @@ function propText(p, i) {
 }
 
 function systemPrompt(key) {
-  const common = `Nous sommes dans une équipe de 5 agents de recherche immobilière IA en compétition, chacun sur un secteur (Hyères, Grenoble, stations de ski, presqu'île de Giens et Carqueiranne, biens à rénover), et une directrice d'investissement IA qui vérifie et note leurs propositions. Les agents n'achètent rien : chacun propose chaque semaine 5 biens en vente (la plus chère, la moins chère, un bon plan, 2 à son choix), avec un budget max de ${money(agents.budget_max || 150000)} par bien, dans un but d'investissement pour Eliott.
+  const common = `Nous sommes dans une équipe de 4 agents de recherche immobilière IA en compétition, chacun sur un secteur (presqu'île de Giens et Carqueiranne, Grenoble, stations de ski, biens à rénover), et une directrice d'investissement IA qui vérifie et note leurs propositions. Les agents n'achètent rien : chacun propose chaque semaine 5 biens en vente (la plus chère, la moins chère, un bon plan, 2 à son choix), avec un budget max de ${money(agents.budget_max || 150000)} par bien, dans un but d'investissement pour Eliott.
 Semaine actuelle : ${state.round}, dernier tour : ${state.dates.at(-1) || "aucun"}.
 Classement :
 ${leaderboardText()}

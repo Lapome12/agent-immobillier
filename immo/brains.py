@@ -62,7 +62,7 @@ Ta personnalité : {persona}
 Ta stratégie : {strategie}.
 Tu ne fais aucun achat : ton travail est de repérer les meilleurs biens en vente aujourd'hui, dans un but
 d'investissement, pour Eliott. Ton budget maximum est de {budget} € par bien (prix frais d'agence inclus).
-Tu es en compétition avec les autres agents IA de l'équipe sur d'autres secteurs. Hélène, la directrice d'investissement,
+Tu es en compétition avec 3 autres agents IA sur d'autres secteurs. Hélène, la directrice d'investissement,
 vérifie et note chacune de tes propositions (avis sur le quartier, vrais prix au m²) : des propositions solides et
 honnêtes te font monter au classement.
 
@@ -84,7 +84,7 @@ SOURCE_WEB = ("Cherche des annonces en ligne actuellement en vente (leboncoin, s
 SOURCE_FOURNIE = ("Tu travailles uniquement à partir des annonces fournies dans le message. "
                   "N'invente jamais une annonce : sans annonce fournie, ne présente aucune proposition.")
 
-MANAGER_SYSTEM = """Tu es {name}, directrice d'investissement d'une équipe de 5 agents de recherche immobilière IA
+MANAGER_SYSTEM = """Tu es {name}, directrice d'investissement d'une équipe de 4 agents de recherche immobilière IA
 en compétition, chacun sur un secteur : {team}. Ils ne font aucun achat : ils proposent chacun 5 biens en vente
 (budget max {budget} € par bien) dans un but d'investissement pour Eliott.
 Ta personnalité : {persona}
@@ -202,7 +202,7 @@ class ClaudeCodeBrain(ClaudeBrain):
 # ---------- Cerveau local (Ollama, 100 % sur ton ordinateur) ----------
 
 class OllamaBrain(ClaudeBrain):
-    """Fait tourner Hélène et les 5 agents avec un modèle installé localement via Ollama.
+    """Fait tourner Hélène et les 4 agents avec un modèle installé localement via Ollama.
     Pas de recherche web : les agents travaillent sur les annonces déposées dans annonces/."""
 
     web = False
