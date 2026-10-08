@@ -1,14 +1,14 @@
-# Agents immobiliers IA : 4 agents en compétition + 1 directrice d'investissement
+# Agents immobiliers IA : 4 agents de recherche en compétition + 1 directrice d'investissement
 
 Même principe que l'[Arène des traders](https://github.com/Lapome12/arene-des-traders), appliqué à l'immobilier.
-Tout est **fictif** : les agents cherchent de vraies annonces et les comparent aux vrais prix de vente,
-mais les achats et les loyers sont simulés. Aucune offre n'est envoyée à personne.
+Les agents **n'achètent rien** : chaque semaine, ils cherchent de vraies annonces en ligne et proposent les biens
+les plus intéressants pour investir, avec un **budget maximum de 150 000 € par bien**. Hélène les vérifie et les note.
 
 ## L'équipe
 
 | Agent | Rôle | Secteur |
 |---|---|---|
-| 🧭 **Hélène** | Directrice d'investissement (manager) | Répartit l'enveloppe entre les 4 agents, sanctionne les achats surpayés |
+| 🧭 **Hélène** | Directrice d'investissement (manager) | Vérifie et note chaque proposition à partir d'avis et de prix au m² trouvés en ligne |
 | ☀️ **Marius** | Agent Hyères | Hyères : centre, Costebelle, L'Ayguade, Le Port, Giens |
 | 🏙️ **Chloé** | Agente Grenoble | Grenoble, Saint-Martin-d'Hères, Échirolles, Meylan |
 | ⛷️ **Bastien** | Agent stations de ski | Chamrousse, Alpe d'Huez, Les Deux Alpes, Villard-de-Lans, Les Belleville, Tignes |
@@ -19,23 +19,21 @@ Noms, personnalités, communes et fourchettes de loyers se changent dans `immo/c
 
 ## Comment ça marche
 
-- **Un tour par semaine.** Chaque agent reçoit les prix réels de son secteur (médiane au m² par
+- **Un tour par semaine.** Chaque agent reçoit les prix réels des ventes de son secteur (médiane au m² par
   commune et type de bien, évolution sur un an, ventes récentes, d'après [DVF](https://www.data.gouv.fr/fr/datasets/demandes-de-valeurs-foncieres-geolocalisees/)),
-  son portefeuille, le classement et le dernier message d'Hélène. Il **cherche lui-même des annonces en
-  ligne** (recherche web de Claude), présente ses 3 meilleures opportunités avec leur lien, et peut en
-  acheter une (fictivement) ou attendre.
-- **Le code vérifie les chiffres**, quoi que dise l'agent : prix au m² comparé à la médiane DVF du secteur,
-  loyer plafonné à une fourchette réaliste par zone (et à 15 % de rendement brut), annonce sans lien ou à
-  moins de 40 % du prix du marché rejetée, 60 % max du compte dans un seul bien, un achat max par tour.
-- **Score d'une opportunité** = marge (valeur au prix médian du secteur moins 5 % de frais de revente,
-  rapportée au coût total prix + 8 % de notaire + travaux) et rendement locatif net (loyer × 12 × 75 % / coût total).
-- **Performance d'un agent** = plus-values latentes de ses biens + loyers nets encaissés (pas de loyer pendant
-  les travaux). Les biens sont revalorisés à chaque mise à jour des prix DVF.
-- **Hélène fait une revue toutes les 4 semaines** : elle regarde performances, achats et opportunités, puis
-  décide quelle part de l'enveloppe confier à chacun (entre 10 % et 40 %) et choisit son coup de cœur.
-  Les biens ne se revendent pas : seule la trésorerie passe d'un agent à l'autre.
+  le classement et le dernier message d'Hélène. Il cherche des annonces en ligne et présente **5 propositions** :
+  1. **la plus chère** : le meilleur bien que le budget permet ;
+  2. **la moins chère** : le ticket d'entrée le plus bas qui reste un placement sain ;
+  3. **un bon plan** : la meilleure affaire du moment ;
+  4. et 5. **deux au choix de l'agent**, selon sa stratégie.
+- **Le code vérifie les chiffres** : prix au m² comparé aux ventes réelles du secteur, loyer plafonné à une
+  fourchette réaliste par zone, et signalement des annonces sans lien, hors budget ou au prix suspect.
+- **Hélène corrige chaque proposition** : elle cherche en ligne les avis sur le quartier ou la station et les prix
+  au m² actuels (MeilleursAgents, SeLoger, notaires…), puis donne une note sur 10, un verdict (validée, à revoir,
+  rejetée) et la correction à retenir. Elle choisit aussi son coup de cœur de la semaine.
+- **Classement** : note moyenne donnée par Hélène, semaine après semaine.
 
-Enveloppe de départ : 2 000 000 € fictifs, 500 000 € par agent. Tout se règle dans `immo/config.py`.
+Le budget, les catégories et la fréquence des revues se règlent dans `immo/config.py`.
 
 Tu peux aussi **donner des annonces à étudier** : colle le texte d'une annonce et son lien dans un fichier
 `.txt` du dossier `annonces/<agent>/` (`hyeres`, `grenoble`, `station`, `renovation`). L'agent l'étudie en
@@ -59,15 +57,12 @@ Deux façons de faire tourner les agents avec Claude (choix automatique), comme 
 # 1. Tester gratuitement, sans clé ni Internet : marché et annonces simulés, stratégie simple
 python main.py sim --rounds 16 --mock
 
-# 2. Marché simulé avec les vrais agents Claude
-python main.py sim --rounds 8
-
-# 3. En conditions réelles : un tour sur les vrais prix DVF et de vraies annonces, une fois par semaine
+# 2. En conditions réelles : un tour sur les vrais prix DVF et de vraies annonces, une fois par semaine
 python main.py live
 ```
 
 Chaque partie est sauvegardée dans `runs/<mode>/` :
-- `rapport.html` : meilleures opportunités (avec liens), classement, courbes, portefeuilles, décisions d'Hélène
+- `rapport.html` : les 5 propositions de chaque agent (avec liens) et les corrections d'Hélène, sans JavaScript
 - `journal.md` : toutes les analyses et décisions, semaine par semaine
 - `state.json` : l'état complet (le mode `live` reprend là où il s'était arrêté)
 
@@ -75,9 +70,9 @@ Les prix DVF sont téléchargés depuis data.gouv.fr et gardés dans `cache/dvf/
 
 ## L'interface graphique
 
-Comme pour l'Arène des traders, le dossier `site/` est un tableau de bord interactif : meilleures
-opportunités (avec liens), cartes des agents, courbes de performance, biens achetés, décisions d'Hélène,
-journal, et une **discussion en direct avec chaque agent** (clique sur sa carte).
+Comme pour l'Arène des traders, le dossier `site/` est un tableau de bord interactif : un tableau par agent
+avec ses 5 propositions et les notes et corrections d'Hélène, son coup de cœur, les courbes des notes, ses bilans,
+le journal, et une **discussion en direct avec chaque agent** (clique sur sa carte).
 
 - Sur GitHub Pages : publié automatiquement après chaque tour (voir plus bas).
 - En local : `python main.py export --out _site` puis `python -m http.server -d _site`, ou `lancer_local.bat`.
@@ -105,7 +100,7 @@ au web : les agents travaillent alors uniquement sur les annonces que tu dépose
 
 ## Coût indicatif
 
-Un tour = 4 appels Claude avec recherche web (+1 pour Hélène toutes les 4 semaines). Avec l'abonnement,
+Un tour = 5 appels Claude avec recherche web (4 agents + Hélène). Avec l'abonnement,
 ces appels comptent dans tes limites d'usage ; avec une clé API, ils sont facturés (recherche web comprise).
 Pour réduire : `AGENT_EFFORT=low`, `IMMO_MODEL=claude-sonnet-5-5`, ou `IMMO_WEB_SEARCH=0`
 (les agents ne travaillent alors que sur les annonces déposées).
@@ -119,9 +114,9 @@ site/                 interface graphique (tableau de bord + discussion avec les
 lancer_local.bat      lanceur Windows de la version locale
 annonces/             annonces à faire étudier, un dossier par agent
 .github/workflows/    tour hebdomadaire automatique + publication GitHub Pages
-immo/config.py        agents, communes, enveloppe, garde-fous, modèle
+immo/config.py        agents, communes, budget, catégories, garde-fous, modèle
 immo/brains.py        prompts et appels Claude (+ Ollama, + mode --mock)
-immo/engine.py        tours, vérification des chiffres, achats, classement, revues d'Hélène
+immo/engine.py        tours, vérification des chiffres, classement, corrections d'Hélène
 immo/marche.py        prix réels DVF ou marché simulé
 immo/report.py        rapport HTML
 ```
@@ -129,6 +124,6 @@ immo/report.py        rapport HTML
 ## Avant de passer à l'acte
 
 Les agents peuvent se tromper avec assurance : une annonce peut être déjà vendue, mal décrite ou cacher
-un problème (copropriété en difficulté, zone inondable, charges énormes en station). La médiane DVF d'une
-commune ne dit rien de l'état d'un bien précis. Sers-toi des agents pour **repérer et trier**, puis vérifie
-chaque dossier toi-même (visite, diagnostics, PV d'AG, avis d'un notaire ou d'un artisan) avant toute offre.
+un problème (copropriété en difficulté, zone inondable, charges énormes en station). Sers-toi d'eux pour
+**repérer et trier**, puis vérifie chaque dossier toi-même (visite, diagnostics, PV d'AG, avis d'un notaire ou
+d'un artisan) avant toute offre.

@@ -25,12 +25,15 @@
 <main class="wrap">
   <section class="kpis" id="kpis"></section>
 
+  <section id="coup"></section>
+
   <section>
-    <h2>Meilleures opportunités du moment</h2>
-    <p class="muted small">Marge : valeur au prix médian des ventes réelles du secteur (DVF, moins 5 % de frais de revente)
-      comparée au coût total (prix + 8 % de notaire + travaux). Rendement net : loyer × 12 × 75 % / coût total.
+    <h2>Les propositions de la semaine</h2>
+    <p class="muted small">Chaque agent propose 5 biens en vente : la plus chère, la moins chère, un bon plan et 2 à son choix.
+      Hélène les note et les corrige à partir des avis et des prix au m² trouvés en ligne. Le prix des ventes réelles du secteur
+      vient des données publiques DVF. Rendement net : loyer × 12 × 75 % / (prix + 8 % de notaire + travaux).
       Vérifie toujours l'annonce avant de te déplacer.</p>
-    <div class="table-wrap" id="best"></div>
+    <div id="propositions"></div>
   </section>
 
   <section>
@@ -40,22 +43,20 @@
   </section>
 
   <section>
-    <h2>Performance</h2>
+    <h2>Notes d'Hélène, semaine après semaine</h2>
     <div class="legend" id="legend"></div>
     <div id="chart"></div>
   </section>
 
   <section>
     <div class="tabs" role="tablist">
-      <button class="tab active" data-tab="biens" role="tab">Biens achetés</button>
-      <button class="tab" data-tab="reviews" role="tab">Décisions de la directrice</button>
+      <button class="tab active" data-tab="reviews" role="tab">Bilans d'Hélène</button>
       <button class="tab" data-tab="journal" role="tab">Journal</button>
     </div>
-    <div id="tab-biens" class="tab-panel"></div>
-    <div id="tab-reviews" class="tab-panel hidden"></div>
+    <div id="tab-reviews" class="tab-panel"></div>
     <div id="tab-journal" class="tab-panel hidden"></div>
   </section>
-  <p class="muted small foot">Investissement fictif : les annonces et les prix sont réels, les achats et les loyers sont simulés.</p>
+  <p class="muted small foot">Outil de recherche : les annonces et les prix sont réels, aucun achat n'est fait. Les loyers et rendements sont des estimations.</p>
 </main>
 
 <aside id="chat" class="chat hidden" aria-label="Discussion">

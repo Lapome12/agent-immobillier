@@ -4,11 +4,14 @@
 const KEY_STORAGE = "immo-anthropic-key";
 const CHAT_MODEL = "claude-opus-5-5";
 const COLORS = { hyeres: "var(--hyeres)", grenoble: "var(--grenoble)", station: "var(--station)", renovation: "var(--renovation)", manager: "var(--manager)" };
+const LIBELLES = { chere: "La plus chère", pas_chere: "La moins chère", bon_plan: "Bon plan", choix_agent: "Choix de l'agent" };
+const VERDICTS = { "validée": "good", "à revoir": "warn", "rejetée": "bad" };
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-const pct = (x, d = 2) => `${x >= 0 ? "+" : ""}${(x * 100).toFixed(d)} %`;
+const pct = (x, d = 0) => `${x >= 0 ? "+" : ""}${(x * 100).toFixed(d)} %`;
 const money = (x) => `${Math.round(x).toLocaleString("fr-FR")} €`;
+const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 
 let agents, state, journal = "";
 // Version Artifact claude.ai : les données sont intégrées à la page et la discussion
@@ -21,15 +24,8 @@ function getSample() {
 }
 const histories = {}; // historique de discussion par agent (en mémoire)
 
-function metrics(curve) {
-  if (!curve || curve.length < 2) return { ret: 0, mdd: 0 };
-  let peak = curve[0], mdd = 0;
-  for (const v of curve) { peak = Math.max(peak, v); mdd = Math.max(mdd, 1 - v / peak); }
-  return { ret: curve.at(-1) / curve[0] - 1, mdd };
-}
-
 function ranking() {
-  return Object.keys(state.agents).sort((a, b) => (state.agents[b].nav.at(-1) ?? 1) - (state.agents[a].nav.at(-1) ?? 1));
+  return Object.keys(state.agents).sort((a, b) => (avg(state.agents[b].notes_tours) ?? -1) - (avg(state.agents[a].notes_tours) ?? -1));
 }
 
 function link(o) {
@@ -41,7 +37,7 @@ function link(o) {
 
 function renderHeader() {
   const date = state.dates.at(-1) || "";
-  $("subtitle").textContent = `Semaine ${state.round} · dernier tour ${date} · investissement fictif`;
+  $("subtitle").textContent = `Semaine ${state.round} · dernier tour ${date} · budget max ${money(agents.budget_max || 150000)} par bien`;
   const m = location.hostname.match(/^([^.]+)\.github\.io$/);
   const repo = location.pathname.split("/").filter(Boolean)[0];
   if (embedded) $("key-btn").classList.add("hidden");
@@ -51,39 +47,51 @@ function renderHeader() {
 }
 
 function renderKpis() {
-  const keys = Object.keys(state.agents);
-  const n = Math.min(...keys.map((k) => state.agents[k].curve.length));
-  const fund = Array.from({ length: n }, (_, i) => keys.reduce((a, k) => a + state.agents[k].curve[i], 0));
-  const fm = metrics(fund);
+  const props = Object.values(state.agents).flatMap((a) => a.propositions);
+  const notes = props.map((p) => p.note).filter((n) => n != null);
   const leader = agents.agents[ranking()[0]];
-  const biens = keys.reduce((a, k) => a + state.agents[k].biens.length, 0);
-  const loyers = keys.reduce((a, k) => a + (state.agents[k].loyers_cumules || 0), 0);
+  const hasNotes = Object.values(state.agents).some((a) => a.notes_tours.length);
   $("kpis").innerHTML = [
-    ["Valeur de l'enveloppe", money(fund.at(-1) ?? 0)],
-    ["Rendement", pct(fm.ret)],
-    ["Biens achetés", biens],
-    ["Loyers nets encaissés", money(loyers)],
-    ["En tête", `${leader.emoji} ${esc(leader.name)}`],
+    ["Propositions de la semaine", props.length],
+    ["Validées par " + esc(agents.manager.name), props.filter((p) => p.verdict === "validée").length],
+    ["Note moyenne de l'équipe", notes.length ? `${avg(notes).toFixed(1)}/10` : "-"],
+    ["En tête", hasNotes ? `${leader.emoji} ${esc(leader.name)}` : "-"],
   ].map(([l, v]) => `<div class="kpi"><span class="muted small">${l}</span><b>${v}</b></div>`).join("");
-  return fund;
 }
 
-function oppRow(k, o) {
-  const a = agents.agents[k];
-  const agent = `<td><span class="dot" style="background:${COLORS[k]}"></span>${esc(a.name)}</td>`;
-  return `<tr>${agent}<td>${link(o)}<span class="muted small">${esc(o.commune)} · ${Math.round(o.surface_m2)} m² · DPE ${esc(o.dpe)}</span></td>
-    <td class="num">${money(o.prix)}<span class="muted small">+ travaux ${money(o.travaux_estimes)}</span></td>
-    <td class="num">${money(o.prix_m2)}/m²<span class="muted small">marché ${money(o.mediane_m2)}/m²</span></td>
-    <td class="num ${o.marge >= 0 ? "up" : "down"}">${pct(o.marge, 0)}</td>
-    <td class="num">${(o.rendement_net * 100).toFixed(1)} %${o.loyer_plafonne ? " *" : ""}</td>
-    <td class="score">${o.score}</td></tr>`;
+function renderCoupDeCoeur() {
+  const r = state.reviews.at(-1);
+  $("coup").innerHTML = r ? `<div class="review"><b>${agents.manager.emoji} Coup de cœur d'${esc(agents.manager.name)}</b>
+    <p>${esc(r.coup_de_coeur)}</p><p class="muted small">${esc(r.commentary)}</p></div>` : "";
 }
 
-function renderBest() {
-  const all = Object.entries(state.agents).flatMap(([k, a]) => a.opportunites.filter((o) => o.valide).map((o) => [k, o]));
-  all.sort((x, y) => y[1].score - x[1].score);
-  $("best").innerHTML = all.length ? `<table><tr><th>Agent</th><th>Annonce</th><th>Prix</th><th>Prix au m²</th><th>Marge</th><th>Rendement net</th><th>Score</th></tr>
-    ${all.slice(0, 10).map(([k, o]) => oppRow(k, o)).join("")}</table>` : `<p class="muted" style="padding:12px">Aucune opportunité pour le moment.</p>`;
+function propRow(p) {
+  const verdict = p.verdict ? `<span class="chip ${VERDICTS[p.verdict] || ""}">${esc(p.verdict)}</span>` : "";
+  const note = p.note != null ? `<b class="score">${Math.round(p.note)}/10</b>${verdict}` : `<span class="muted small">pas encore notée</span>`;
+  const m2 = p.prix_m2 ? `${money(p.prix_m2)}/m²<span class="muted small">ventes DVF ${money(p.mediane_m2)}/m²${p.prix_m2_constate ? `<br>selon ${esc(agents.manager.name)} ${money(p.prix_m2_constate)}/m²` : ""}</span>` : "-";
+  const avis = [p.avis_quartier, p.correction].filter(Boolean).map(esc).join(" ");
+  return `<tr>
+    <td><span class="cat cat-${esc(p.categorie)}">${LIBELLES[p.categorie] || esc(p.categorie)}</span></td>
+    <td>${link(p)}<span class="muted small">${esc(p.commune)}${p.quartier ? " · " + esc(p.quartier) : ""} · ${Math.round(p.surface_m2 || 0)} m² · DPE ${esc(p.dpe)}</span>
+      ${p.pourquoi ? `<span class="small">${esc(p.pourquoi)}</span>` : ""}${p.motif ? `<span class="small down">⚠ ${esc(p.motif)}</span>` : ""}</td>
+    <td class="num">${money(p.prix || 0)}${p.travaux_estimes ? `<span class="muted small">+ travaux ${money(p.travaux_estimes)}</span>` : ""}</td>
+    <td class="num">${m2}</td>
+    <td class="num">${p.rendement_net != null ? (p.rendement_net * 100).toFixed(1) + " %" : "-"}${p.loyer_retenu ? `<span class="muted small">${money(p.loyer_retenu)}/mois</span>` : ""}</td>
+    <td>${note}</td>
+    <td class="small">${avis || "-"}</td></tr>`;
+}
+
+function renderPropositions() {
+  $("propositions").innerHTML = ranking().map((k) => {
+    const a = agents.agents[k], t = state.agents[k];
+    const rows = t.propositions.map(propRow).join("");
+    return `<div class="block" style="--c:${COLORS[k]}">
+      <div class="block-head"><div class="avatar">${a.emoji}</div><div><b>${esc(a.name)}</b><div class="muted small">${esc(a.zone)}</div></div></div>
+      ${rows ? `<div class="table-wrap"><table><tr><th>Catégorie</th><th>Annonce</th><th>Prix</th><th>Prix au m²</th><th>Rendement net</th><th>Note</th><th>Avis et correction d'${esc(agents.manager.name)}</th></tr>${rows}</table></div>`
+        : `<p class="muted">Aucune proposition cette semaine.</p>`}
+      ${t.feedback ? `<p class="small"><b>Retour d'${esc(agents.manager.name)} :</b> ${esc(t.feedback)}</p>` : ""}
+    </div>`;
+  }).join("");
 }
 
 function renderAgents() {
@@ -95,22 +103,21 @@ function renderAgents() {
         <div><b>${esc(agents.manager.name)}</b><div class="muted small">${esc(agents.manager.role)}</div></div>
         <span class="rank">${state.reviews.length} revue(s)</span></div>
       <p class="quote">${esc(agents.manager.persona)}</p>
-      <p class="quote">${lastReview ? "« " + esc(lastReview.commentary) + " »" : `Pas encore de revue : la première a lieu à la semaine ${agents.manager_every || 4}.`}</p>
+      <p class="quote">${lastReview ? "« " + esc(lastReview.commentary) + " »" : "Pas encore de revue."}</p>
     </button>`;
   const cards = order.map((k, i) => {
-    const a = agents.agents[k], t = state.agents[k], m = metrics(t.nav);
-    const biens = t.biens.map((b) => `<span class="chip">${esc(b.commune)} · ${Math.round(b.surface_m2)} m²</span>`).join("") || `<span class="chip">aucun bien</span>`;
+    const a = agents.agents[k], t = state.agents[k];
+    const m = avg(t.notes_tours);
     return `
       <button class="agent" style="--c:${COLORS[k]}" data-agent="${k}">
         <div class="agent-top"><div class="avatar">${a.emoji}</div>
           <div><b>${esc(a.name)}</b><div class="muted small">${esc(a.role)}</div></div>
           <span class="rank">#${i + 1}</span></div>
         <div class="stats">
-          <div><span>Valeur</span>${money(t.curve.at(-1) ?? 0)}</div>
-          <div><span>Rendement</span><b class="${m.ret >= 0 ? "up" : "down"}">${pct(m.ret)}</b></div>
-          <div><span>Trésorerie</span>${money(t.cash)}</div>
+          <div><span>Note moyenne</span>${m != null ? m.toFixed(1) + "/10" : "-"}</div>
+          <div><span>Cette semaine</span>${t.notes_tours.length ? t.notes_tours.at(-1).toFixed(1) + "/10" : "-"}</div>
+          <div><span>Validées</span>${t.propositions.filter((p) => p.verdict === "validée").length}/${t.propositions.length}</div>
         </div>
-        <div class="pos">${biens}<span class="chip">part ${Math.round(t.budget * 100)} %</span></div>
         <p class="quote">${esc(t.analyse || a.persona)}</p>
       </button>`;
   }).join("");
@@ -118,47 +125,32 @@ function renderAgents() {
   document.querySelectorAll(".agent").forEach((el) => el.addEventListener("click", () => openChat(el.dataset.agent)));
 }
 
-function renderChart(fund) {
-  const series = Object.fromEntries(Object.keys(state.agents).map((k) => [k, state.agents[k].nav]));
-  if (fund.length) series.fonds = fund.map((v) => v / fund[0]);
-  const all = Object.values(series).flat();
+function renderChart() {
+  const series = Object.fromEntries(Object.keys(state.agents).map((k) => [k, state.agents[k].notes_tours]));
   const n = Math.max(...Object.values(series).map((s) => s.length));
   $("legend").innerHTML = Object.keys(series).map((k) =>
-    `<span><span class="dot" style="background:${COLORS[k] || "var(--fg)"}"></span>${k === "fonds" ? "Enveloppe totale (pointillés)" : esc(agents.agents[k].name)}</span>`).join("");
-  if (n < 2) { $("chart").innerHTML = `<p class="muted">Les courbes apparaîtront après la deuxième semaine.</p>`; return; }
-  const W = 1000, H = 320, L = 60, P = 20;
-  let lo = Math.min(...all), hi = Math.max(...all); if (hi === lo) hi = lo + 1e-6;
+    `<span><span class="dot" style="background:${COLORS[k]}"></span>${esc(agents.agents[k].name)}</span>`).join("");
+  if (n < 2) { $("chart").innerHTML = `<p class="muted">Les courbes des notes apparaîtront après la deuxième semaine.</p>`; return; }
+  const W = 1000, H = 300, L = 50, P = 20, lo = 0, hi = 10;
   const x = (i) => L + (i * (W - L - P)) / (n - 1), y = (v) => H - P - ((v - lo) * (H - 2 * P)) / (hi - lo);
-  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Performance comparée">`;
-  for (const f of [0, 0.25, 0.5, 0.75, 1]) {
-    const v = lo + f * (hi - lo);
-    svg += `<line class="grid" x1="${L}" x2="${W - P}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${pct(v - 1, 1)}</text>`;
-  }
-  svg += `<text x="${L}" y="${H - 2}">${esc(state.dates[0] || "")}</text><text x="${W - P}" y="${H - 2}" text-anchor="end">${esc(state.dates.at(-1) || "")}</text>`;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Note moyenne par semaine">`;
+  for (const v of [0, 2.5, 5, 7.5, 10]) svg += `<line class="grid" x1="${L}" x2="${W - P}" y1="${y(v)}" y2="${y(v)}"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
   for (const [k, s] of Object.entries(series)) {
+    if (!s.length) continue;
     const pts = s.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
-    svg += `<polyline points="${pts}" fill="none" stroke="${COLORS[k] || "var(--fg)"}" stroke-width="2.2" ${k === "fonds" ? 'stroke-dasharray="6 5"' : ""}/>`;
+    svg += `<polyline points="${pts}" fill="none" stroke="${COLORS[k]}" stroke-width="2.2"/>`;
+    svg += `<circle cx="${x(s.length - 1)}" cy="${y(s.at(-1))}" r="4" fill="${COLORS[k]}"/>`;
   }
   $("chart").innerHTML = svg + "</svg>";
 }
 
 function renderTabs() {
-  const biens = Object.entries(state.agents).flatMap(([k, a]) => a.biens.map((b) => [k, b]));
-  $("tab-biens").innerHTML = biens.length ? `<div class="table-wrap"><table><tr><th>Agent</th><th>Bien</th><th>Coût total</th><th>Valeur actuelle</th><th>Plus-value</th><th>Loyer</th></tr>
-    ${biens.map(([k, b]) => {
-      const v = b.valeur_actuelle ?? b.valeur_estimee;
-      return `<tr><td><span class="dot" style="background:${COLORS[k]}"></span>${esc(agents.agents[k].name)}</td>
-        <td>${link(b)}<span class="muted small">${esc(b.commune)} · ${Math.round(b.surface_m2)} m² · acheté ${esc(b.achat_date)}</span></td>
-        <td class="num">${money(b.cout_total)}</td><td class="num">${money(v)}</td>
-        <td class="num ${v >= b.cout_total ? "up" : "down"}">${pct(v / b.cout_total - 1, 0)}</td>
-        <td class="num">${money(b.loyer_retenu)}/mois</td></tr>`;
-    }).join("")}</table></div>` : `<p class="muted">Aucun bien acheté pour le moment.</p>`;
   $("tab-reviews").innerHTML = state.reviews.length ? [...state.reviews].reverse().map((r) => `
     <div class="review"><b>Semaine ${r.round}</b> <span class="muted small">· ${esc(r.date)}</span>
       <p>${esc(r.commentary)}</p>
       ${r.coup_de_coeur ? `<p><b>Coup de cœur :</b> ${esc(r.coup_de_coeur)}</p>` : ""}
-      <div class="pos">${Object.entries(r.budgets).map(([k, w]) => `<span class="chip">${agents.agents[k].emoji} ${esc(agents.agents[k].name)} ${Math.round(w * 100)} %</span>`).join("")}</div>
-    </div>`).join("") : `<p class="muted">${esc(agents.manager.name)} fait sa première revue à la semaine ${agents.manager_every || 4}.</p>`;
+      <div class="pos">${Object.entries(r.notes || {}).map(([k, n]) => `<span class="chip">${agents.agents[k].emoji} ${esc(agents.agents[k].name)} ${n.toFixed(1)}/10</span>`).join("")}</div>
+    </div>`).join("") : `<p class="muted">Pas encore de revue.</p>`;
   $("tab-journal").innerHTML = `<div class="journal">${esc(journal.split("\n## ").slice(-15).reverse().map((b, i) => (i < 14 ? "## " : "") + b).join("\n\n")) || "Journal vide."}</div>`;
   document.querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("active", x === b));
@@ -170,22 +162,23 @@ function renderTabs() {
 
 function leaderboardText() {
   return ranking().map((k, i) => {
-    const a = agents.agents[k], t = state.agents[k], m = metrics(t.nav);
-    return `${i + 1}. ${a.name} (${a.role}) : valeur ${money(t.curve.at(-1) ?? 0)}, rendement ${pct(m.ret)}, ${t.biens.length} bien(s), trésorerie ${money(t.cash)}, part de l'enveloppe ${Math.round(t.budget * 100)} %`;
+    const a = agents.agents[k], t = state.agents[k], m = avg(t.notes_tours);
+    return `${i + 1}. ${a.name} (${a.role}) : note moyenne ${m != null ? m.toFixed(1) : "-"}/10`;
   }).join("\n");
 }
 
-function oppText(o) {
-  return `${o.titre} (${o.commune}, ${Math.round(o.surface_m2)} m², ${money(o.prix)}, ${o.valide ? `marge ${pct(o.marge, 0)}, rendement net ${(o.rendement_net * 100).toFixed(1)} %, score ${o.score}` : `écartée : ${o.motif}`}) ${o.url}`;
+function propText(p, i) {
+  return `${i}. [${LIBELLES[p.categorie] || p.categorie}] ${p.titre} (${p.commune}, ${p.quartier || "-"}, ${Math.round(p.surface_m2 || 0)} m², ${money(p.prix || 0)}, ${p.prix_m2 ? money(p.prix_m2) + "/m² contre " + money(p.mediane_m2) + "/m² en DVF" : ""}) ${p.url}`
+    + (p.note != null ? ` · note d'Hélène ${p.note}/10, ${p.verdict} : ${p.avis_quartier || ""} ${p.correction || ""}` : "");
 }
 
 function systemPrompt(key) {
-  const common = `Nous sommes dans une équipe de 4 agents immobiliers IA en compétition, chacun sur un secteur (Hyères, Grenoble, stations de ski, biens à rénover), et une directrice d'investissement IA qui leur répartit une enveloppe. Les annonces et les prix de référence (DVF) sont réels ; les achats et les loyers sont fictifs.
+  const common = `Nous sommes dans une équipe de 4 agents de recherche immobilière IA en compétition, chacun sur un secteur (Hyères, Grenoble, stations de ski, biens à rénover), et une directrice d'investissement IA qui vérifie et note leurs propositions. Les agents n'achètent rien : chacun propose chaque semaine 5 biens en vente (la plus chère, la moins chère, un bon plan, 2 à son choix), avec un budget max de ${money(agents.budget_max || 150000)} par bien, dans un but d'investissement pour Eliott.
 Semaine actuelle : ${state.round}, dernier tour : ${state.dates.at(-1) || "aucun"}.
 Classement :
 ${leaderboardText()}
 
-Tu discutes maintenant avec Eliott, le propriétaire de l'enveloppe. Réponds en français, dans ton personnage, de façon concise et concrète, en t'appuyant sur les données ci-dessous. Tu ne peux pas acheter depuis cette discussion : les décisions se prennent pendant les tours hebdomadaires. Rappelle si besoin qu'un vrai achat demande de visiter le bien et de vérifier les diagnostics et les documents de copropriété.`;
+Tu discutes maintenant avec Eliott. Réponds en français, dans ton personnage, de façon concise et concrète, en t'appuyant sur les données ci-dessous. Rappelle si besoin qu'avant une offre il faut visiter le bien et vérifier les diagnostics et les documents de copropriété.`;
   if (key === "manager") {
     const reviews = state.reviews.slice(-5).map((r) => `Semaine ${r.round} (${r.date}) : ${r.commentary} Coup de cœur : ${r.coup_de_coeur || "-"}`).join("\n") || "aucune";
     return `Tu es ${agents.manager.name}, ${agents.manager.role} de l'équipe. Ta personnalité : ${agents.manager.persona}
@@ -194,19 +187,16 @@ ${common}
 Tes dernières revues :
 ${reviews}
 
-Dernières analyses et opportunités des agents :
-${Object.keys(state.agents).map((k) => `${agents.agents[k].name} : ${state.agents[k].analyse || "-"}\n  ${state.agents[k].opportunites.map(oppText).join("\n  ") || "aucune"}`).join("\n")}`;
+Propositions de la semaine et tes corrections :
+${Object.keys(state.agents).map((k) => `${agents.agents[k].name} : ${state.agents[k].analyse || "-"}\n  ${state.agents[k].propositions.map(propText).join("\n  ") || "aucune"}`).join("\n")}`;
   }
   const a = agents.agents[key], t = state.agents[key];
-  const biens = t.biens.map((b) => `${b.titre} (${b.commune}) acheté ${money(b.cout_total)}, valeur ${money(b.valeur_actuelle ?? b.valeur_estimee)}, loyer ${money(b.loyer_retenu)}/mois`).join("\n") || "aucun";
   return `Tu es ${a.name}, ${a.role}. Ta personnalité : ${a.persona}
 Ton secteur : ${a.zone}. Ta stratégie : ${a.strategie}.
 ${common}
 
-Tes biens :
-${biens}
-Tes dernières opportunités :
-${t.opportunites.map(oppText).join("\n") || "aucune"}
+Tes propositions de la semaine (avec les corrections d'Hélène) :
+${t.propositions.map(propText).join("\n") || "aucune"}
 Ta dernière analyse : ${t.analyse || "-"}
 Ta note personnelle : ${t.notes || "-"}
 Dernier message de ${agents.manager.name} (ta directrice) : ${t.feedback || "-"}`;
@@ -254,7 +244,7 @@ async function sendWithSample(sample, key, history, out) {
   // Pas de rôle système avec « sample » : les consignes de l'agent ouvrent la conversation.
   const turns = history.map((m, i) => ({
     role: m.role,
-    content: i === 0 ? `${systemPrompt(key)}\n\n---\nMessage d'Eliott, le propriétaire de l'enveloppe :\n${m.content}` : m.content,
+    content: i === 0 ? `${systemPrompt(key)}\n\n---\nMessage d'Eliott :\n${m.content}` : m.content,
   }));
   const res = await sample(turns, { cache: false, onText: ({ text }) => { out.textContent = text; $("chat-log").scrollTop = $("chat-log").scrollHeight; } });
   return res.text;
@@ -422,10 +412,11 @@ async function load() {
     return;
   }
   renderHeader();
-  const fund = renderKpis();
-  renderBest();
+  renderKpis();
+  renderCoupDeCoeur();
+  renderPropositions();
   renderAgents();
-  renderChart(fund);
+  renderChart();
   renderTabs();
 }
 

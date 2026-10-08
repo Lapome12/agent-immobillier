@@ -1,4 +1,4 @@
-"""Point d'entrée : python main.py {sim,live,report,export} [options]"""
+"""Point d'entrée : python main.py {sim,live,report,export,artifact} [options]"""
 import argparse
 import json
 import shutil
@@ -13,7 +13,8 @@ from immo.report import build
 
 
 def agents_json():
-    return {"manager": config.MANAGER, "agents": config.AGENTS, "model": config.MODEL, "manager_every": config.MANAGER_EVERY}
+    return {"manager": config.MANAGER, "agents": config.AGENTS, "model": config.MODEL, "manager_every": config.MANAGER_EVERY,
+            "budget_max": config.BUDGET_MAX, "categories": config.CATEGORIES}
 
 
 def export_site(state_dir, out):
@@ -53,7 +54,7 @@ def build_artifact(state_dir, out):
 
 
 def main():
-    p = argparse.ArgumentParser(description="4 agents immobiliers IA en compétition + 1 directrice d'investissement (argent fictif).")
+    p = argparse.ArgumentParser(description="4 agents de recherche immobilière IA en compétition + 1 directrice d'investissement.")
     p.add_argument("mode", choices=["sim", "live", "report", "export", "artifact"],
                    help="sim : marché et annonces simulés · live : un tour sur les vrais prix DVF et de vraies annonces "
                         "(à lancer chaque semaine) · report : régénère le rapport · export : prépare le site (dossier --out) · "
@@ -98,11 +99,8 @@ def main():
             sys.exit(f"{state_dir} contient déjà une partie : supprime-le ou choisis --state-dir.")
         for i in range(a.rounds):
             fonds.step()
-            print(f"Semaine {i + 1}/{a.rounds} ({marche.label()}) · enveloppe {fonds.total_equity():,.0f} €".replace(",", " "))
+            print(f"Semaine {i + 1}/{a.rounds} ({marche.label()})")
             marche.advance()
-        fonds.encaisser_loyers()
-        fonds.mark()
-        fonds.save()
 
     print("\nClassement :\n" + fonds.leaderboard_text())
     print(f"\nRapport : {build(state_dir)}\nJournal : {fonds.journal_file}")

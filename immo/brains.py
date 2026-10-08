@@ -1,7 +1,6 @@
 """Les « cerveaux » des agents : Claude (API ou abonnement via Claude Code), un modèle local
 (Ollama), ou une stratégie simple hors ligne (mode --mock) pour tester sans clé ni coût."""
 import json
-import math
 from typing import List
 
 from pydantic import BaseModel, Field
@@ -11,84 +10,112 @@ from . import config
 
 # ---------- Formats de réponse imposés aux agents ----------
 
-class Opportunite(BaseModel):
+class Proposition(BaseModel):
+    categorie: str = Field(description="« chere », « pas_chere », « bon_plan » ou « choix_agent »")
     titre: str = Field(description="Ex. : « T2 45 m² rénové, quartier Europole »")
-    url: str = Field(description="Lien de l'annonce (obligatoire, sinon l'opportunité ne compte pas)")
+    url: str = Field(description="Lien de l'annonce (obligatoire)")
     commune_insee: str = Field(description="Code INSEE de la commune, parmi ceux de ta zone")
+    quartier: str = Field(description="Quartier ou secteur précis (rue, lieu-dit, front de neige…)")
     type_bien: str = Field(description="« appartement » ou « maison »")
     surface_m2: float
     prix: float = Field(description="Prix demandé en euros, frais d'agence inclus")
     travaux_estimes: float = Field(description="Budget travaux estimé en euros (0 si aucun)")
-    loyer_mensuel_estime: float = Field(description="Loyer mensuel hors charges réaliste après travaux, en euros")
+    loyer_mensuel_estime: float = Field(description="Loyer mensuel hors charges réaliste (après travaux), en euros")
     dpe: str = Field(description="Classe DPE (A à G) ou « inconnu »")
-    points_forts: str
+    pourquoi: str = Field(description="Pourquoi ce bien dans cette catégorie, en 1 ou 2 phrases")
     risques: str
 
 
 class AgentDecision(BaseModel):
     analyse_marche: str = Field(description="Lecture du marché de ta zone en 2 à 4 phrases")
-    opportunites: List[Opportunite] = Field(description="Tes 3 meilleures opportunités du moment, au plus")
-    achat: int = Field(description="Numéro (0, 1 ou 2) de l'opportunité que tu achètes ce tour-ci, ou -1 pour ne rien acheter")
-    justification_achat: str
+    propositions: List[Proposition] = Field(description="Exactement 5 propositions : chere, pas_chere, bon_plan, choix_agent, choix_agent")
     note_pour_plus_tard: str = Field(description="Ce que tu veux te rappeler au prochain tour")
 
 
-class AgentBudget(BaseModel):
+class Correction(BaseModel):
+    agent: str = Field(description="Identifiant de l'agent")
+    numero: int = Field(description="Numéro de la proposition (0 à 4)")
+    note: float = Field(description="Note de 0 à 10")
+    verdict: str = Field(description="« validée », « à revoir » ou « rejetée »")
+    prix_m2_constate: float = Field(description="Prix au m² réel du quartier selon tes sources (0 si inconnu)")
+    source_prix: str = Field(description="D'où vient ce prix au m² (site, date)")
+    avis_quartier: str = Field(description="Ce que disent les avis en ligne sur le quartier ou la station (1 à 2 phrases)")
+    correction: str = Field(description="Ce que l'agent a mal évalué et ce qu'il faut retenir (1 à 2 phrases)")
+
+
+class AgentFeedback(BaseModel):
     agent: str
-    weight: float = Field(description="Part de l'enveloppe totale confiée à cet agent, entre 0.10 et 0.40")
-    feedback: str = Field(description="Message court à l'agent")
+    feedback: str = Field(description="Message court et utile à l'agent pour le prochain tour")
 
 
 class ManagerDecision(BaseModel):
-    commentary: str = Field(description="Bilan de la période et justification des choix")
-    coup_de_coeur: str = Field(description="La meilleure opportunité vue sur la période, et pourquoi")
-    budgets: List[AgentBudget]
+    commentary: str = Field(description="Bilan de la semaine en 3 à 5 phrases")
+    coup_de_coeur: str = Field(description="La meilleure proposition de la semaine, et pourquoi")
+    corrections: List[Correction] = Field(description="Une correction par proposition, pour toutes les propositions reçues")
+    feedbacks: List[AgentFeedback]
 
 
 # ---------- Cerveau Claude ----------
 
-AGENT_SYSTEM = """Tu es {name}, un agent d'investissement immobilier IA spécialisé sur {zone}.
+AGENT_SYSTEM = """Tu es {name}, un agent de recherche immobilière IA spécialisé sur {zone}.
 Ta personnalité : {persona}
 Ta stratégie : {strategie}.
-Tu gères une enveloppe fictive (tout est simulé, aucun achat réel) et tu es en compétition avec
-3 autres agents IA spécialisés sur d'autres secteurs. Une directrice d'investissement IA réalloue
-régulièrement l'enveloppe vers ceux qui trouvent les meilleures affaires : un mauvais achat te coûtera ton budget.
+Tu ne fais aucun achat : ton travail est de repérer les meilleurs biens en vente aujourd'hui, dans un but
+d'investissement, pour Eliott. Ton budget maximum est de {budget} € par bien (prix frais d'agence inclus).
+Tu es en compétition avec 3 autres agents IA sur d'autres secteurs. Hélène, la directrice d'investissement,
+vérifie et note chacune de tes propositions (avis sur le quartier, vrais prix au m²) : des propositions solides et
+honnêtes te font monter au classement.
 
-À chaque tour (une semaine), tu reçois les prix de vente réels de ta zone (DVF), ton portefeuille et le classement.
-Tu présentes au plus 3 opportunités concrètes et actuelles, chacune avec le lien de l'annonce.
+À chaque tour (une semaine), tu reçois les prix de vente réels de ta zone (DVF) et le classement.
+Tu présentes exactement 5 propositions, dans cet ordre :
+1. chere : {chere}
+2. pas_chere : {pas_chere}
+3. bon_plan : {bon_plan}
+4. et 5. choix_agent : {choix_agent}
 {source}
 Communes autorisées (code INSEE : nom) : {communes}.
-Tu peux en acheter une seule par tour, ou aucune : attendre une meilleure affaire est un choix valable.
-Le code vérifie tes chiffres : il compare le prix au m² à la médiane DVF du secteur, plafonne les loyers
-irréalistes et rejette les annonces sans lien ou au prix suspect. Le coût total d'un achat = prix + 8 % de frais
-de notaire + travaux. La valeur retenue ensuite = surface × prix médian du secteur, moins 5 % de frais de revente.
+Le code vérifie tes chiffres : il compare le prix au m² à la médiane DVF du secteur, plafonne les loyers irréalistes
+et signale les annonces sans lien, hors budget ou au prix suspect.
 Sois honnête sur les risques (copropriété, charges, DPE, inondation, saisonnalité)."""
 
 SOURCE_WEB = ("Cherche des annonces en ligne actuellement en vente (leboncoin, seloger, bienici, pap, "
               "logic-immo, sites d'agences, ventes aux enchères notariales…) et vérifie chaque lien. "
-              "N'invente jamais une annonce : si tu ne trouves rien de bon, présente moins d'opportunités.")
+              "N'invente jamais une annonce : si tu ne trouves pas 5 biens corrects, présente-en moins.")
 SOURCE_FOURNIE = ("Tu travailles uniquement à partir des annonces fournies dans le message. "
-                  "N'invente jamais une annonce : sans annonce fournie, ne présente aucune opportunité.")
+                  "N'invente jamais une annonce : sans annonce fournie, ne présente aucune proposition.")
 
-MANAGER_SYSTEM = """Tu es {name}, directrice d'investissement d'une équipe de 4 agents immobiliers IA en compétition,
-chacun sur un secteur : {team}. Tout est fictif.
+MANAGER_SYSTEM = """Tu es {name}, directrice d'investissement d'une équipe de 4 agents de recherche immobilière IA
+en compétition, chacun sur un secteur : {team}. Ils ne font aucun achat : ils proposent chacun 5 biens en vente
+(budget max {budget} € par bien) dans un but d'investissement pour Eliott.
 Ta personnalité : {persona}
-Ton objectif est de maximiser la création de valeur de l'enveloppe entière (plus-values latentes + loyers nets), sans prendre de risques inconsidérés.
-À chaque revue, tu reçois le classement, les achats et les opportunités repérées, puis tu décides quelle part de
-l'enveloppe confier à chaque agent (entre 0.10 et 0.40 chacun, somme = 1). Récompense les dossiers solides et
-réguliers, pas un coup de chance ; pénalise les achats surpayés ou mal documentés. Donne à chaque agent un retour court et utile."""
+À chaque tour, tu reçois toutes les propositions avec les prix réels des ventes (DVF) calculés par le code.
+{source}
+Pour chaque proposition, donne une note sur 10, un verdict (validée, à revoir, rejetée), le prix au m² réel du
+quartier selon tes sources, ce que disent les avis sur le quartier ou la station, et la correction à apporter
+(lieu mal choisi, prix au m² surestimé, loyer irréaliste, risque oublié…). Sois exigeante mais juste : récompense
+les dossiers solides et honnêtes, pénalise les propositions surpayées, mal situées ou mal documentées.
+Termine par un bilan, ton coup de cœur et un retour court à chaque agent."""
+
+MANAGER_WEB = ("Vérifie avec des recherches en ligne : avis d'habitants sur les quartiers et les stations (sites d'avis "
+               "de quartiers, forums, presse locale), prix au m² actuels par quartier (MeilleursAgents, SeLoger, "
+               "Efficity, notaires), et si une annonce semble déjà vendue ou douteuse. Cite tes sources.")
+MANAGER_SANS_WEB = "Tu n'as pas accès au web : appuie-toi sur les prix DVF fournis et sur tes connaissances."
 
 
 def agent_system(key, web):
     a = config.AGENTS[key]
     communes = ", ".join(f"{c} : {n}" for c, n in a["communes"].items())
+    budget = f"{config.BUDGET_MAX:,.0f}".replace(",", " ")
     return AGENT_SYSTEM.format(name=a["name"], zone=a["zone"], persona=a["persona"], strategie=a["strategie"],
-                               communes=communes, source=SOURCE_WEB if web else SOURCE_FOURNIE)
+                               communes=communes, source=SOURCE_WEB if web else SOURCE_FOURNIE, budget=budget,
+                               **config.CATEGORIES)
 
 
-def manager_system():
+def manager_system(web):
     team = ", ".join(f"{a['name']} ({a['role']}, identifiant {k})" for k, a in config.AGENTS.items())
-    return MANAGER_SYSTEM.format(name=config.MANAGER["name"], persona=config.MANAGER["persona"], team=team)
+    budget = f"{config.BUDGET_MAX:,.0f}".replace(",", " ")
+    return MANAGER_SYSTEM.format(name=config.MANAGER["name"], persona=config.MANAGER["persona"], team=team,
+                                 budget=budget, source=MANAGER_WEB if web else MANAGER_SANS_WEB)
 
 
 class ClaudeBrain:
@@ -100,7 +127,7 @@ class ClaudeBrain:
         self.client = anthropic.Anthropic()
 
     def _ask(self, system, prompt, schema, effort, web=False):
-        tools = [{"type": "web_search_20260209", "name": "web_search", "max_uses": config.MAX_RECHERCHES}] if web else []
+        tools = [{"type": "web_search_20260209", "name": "web_search", "max_uses": config.MAX_RECHERCHES * 2}] if web else []
         messages = [{"role": "user", "content": prompt}]
         for _ in range(5):  # une longue recherche web peut demander de relancer la réponse (pause_turn)
             response = self.client.beta.messages.parse(
@@ -133,7 +160,7 @@ class ClaudeBrain:
         return self._ask(agent_system(key, self.web), prompt, AgentDecision, config.AGENT_EFFORT, web=self.web)
 
     def manager(self, prompt, context):
-        return self._ask(manager_system(), prompt, ManagerDecision, config.MANAGER_EFFORT)
+        return self._ask(manager_system(self.web), prompt, ManagerDecision, config.MANAGER_EFFORT, web=self.web)
 
 
 # ---------- Cerveau Claude Code (abonnement Claude, sans clé API) ----------
@@ -242,34 +269,38 @@ def make_brain(kind="auto"):
 # ---------- Cerveau hors ligne (tests) ----------
 
 class MockBrain:
-    """Stratégie déterministe simple : garde les annonces simulées les moins chères par rapport
-    au marché et achète la meilleure si la décote dépasse un seuil propre à chaque agent."""
+    """Stratégie déterministe simple sur les annonces simulées : la plus chère et la moins chère
+    du budget, la plus décotée en bon plan, puis les deux meilleurs rendements. Hélène note
+    selon l'écart au marché."""
 
     web = False
-    SEUIL = {"hyeres": 0.10, "grenoble": 0.05, "station": 0.15, "renovation": 0.20}
 
     def agent(self, key, prompt):
         data = json.loads(prompt.split("DONNÉES_JSON:", 1)[1])
         meds = {c: s["mediane_m2"] for c, s in data["marche"].items()}
-        cands = []
-        for a in data.get("annonces_simulees", []):
-            cout = a["prix"] * (1 + config.FRAIS_NOTAIRE) + a["travaux_estimes"]
-            decote = 1 - cout / (a["surface_m2"] * meds[a["commune_insee"]])
-            cands.append((decote, a))
-        cands.sort(key=lambda x: x[0], reverse=True)
-        top = [c for c in cands if c[0] > -0.1][:config.MAX_OPPORTUNITES]
-        opps = [Opportunite(**a, points_forts=f"décote estimée {d:+.0%}", risques="mode test") for d, a in top]
-        achat = 0 if top and top[0][0] > self.SEUIL[key] and top[0][0] < 0.55 else -1
-        return AgentDecision(analyse_marche="Sélection par décote (mode test).", opportunites=opps, achat=achat,
-                             justification_achat="meilleure décote" if achat == 0 else "rien d'assez décoté",
-                             note_pour_plus_tard="")
+        ann = [a for a in data.get("annonces_simulees", []) if a["prix"] <= config.BUDGET_MAX]
+        if not ann:
+            return AgentDecision(analyse_marche="Rien dans le budget cette semaine (mode test).", propositions=[], note_pour_plus_tard="")
+        decote = lambda a: 1 - a["prix"] / (a["surface_m2"] * meds[a["commune_insee"]])
+        rdt = lambda a: a["loyer_mensuel_estime"] * 12 / (a["prix"] + a["travaux_estimes"])
+        choix = [("chere", max(ann, key=lambda a: a["prix"])), ("pas_chere", min(ann, key=lambda a: a["prix"])),
+                 ("bon_plan", max(ann, key=decote))]
+        reste = sorted((a for a in ann if all(a is not c for _, c in choix)), key=rdt, reverse=True)
+        choix += [("choix_agent", a) for a in reste[:2]]
+        props = [Proposition(categorie=cat, quartier="centre", pourquoi=f"décote {decote(a):+.0%}, rendement brut {rdt(a):.1%}",
+                             risques="mode test", **a) for cat, a in choix]
+        return AgentDecision(analyse_marche="Sélection automatique (mode test).", propositions=props, note_pour_plus_tard="")
 
     def manager(self, prompt, context):
-        scores = {k: v["rendement_periode"] for k, v in context.items()}
-        exp = {k: math.exp(20 * s) for k, s in scores.items()}
-        tot = sum(exp.values())
-        return ManagerDecision(
-            commentary="Allocation proportionnelle à la performance récente (mode test).",
-            coup_de_coeur="(mode test)",
-            budgets=[AgentBudget(agent=k, weight=exp[k] / tot, feedback="Continue.") for k in context],
-        )
+        data = json.loads(prompt.split("DONNÉES_JSON:", 1)[1])
+        corr = []
+        for k, props in data["propositions"].items():
+            for i, p in enumerate(props):
+                ecart = p.get("ecart_marche") or 0
+                note = max(0.0, min(10.0, round(6 - ecart * 10, 1))) if p["valide"] else 1.0
+                corr.append(Correction(agent=k, numero=i, note=note,
+                                       verdict="validée" if note >= 6 else "à revoir" if note >= 3 else "rejetée",
+                                       prix_m2_constate=p.get("mediane_m2") or 0, source_prix="DVF (mode test)",
+                                       avis_quartier="(mode test)", correction="(mode test)"))
+        return ManagerDecision(commentary="Notes calculées sur l'écart au marché (mode test).", coup_de_coeur="(mode test)",
+                               corrections=corr, feedbacks=[AgentFeedback(agent=k, feedback="Continue.") for k in data["propositions"]])

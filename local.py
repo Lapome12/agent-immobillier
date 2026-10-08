@@ -162,7 +162,7 @@ def main():
     p.add_argument("--sans-planning", action="store_true", help="pas de tour automatique, seulement le bouton")
     p.add_argument("--sans-navigateur", action="store_true")
     p.add_argument("--revue-tous-les", type=int, default=config.MANAGER_EVERY,
-                   help=f"Hélène réalloue l'enveloppe tous les N tours (défaut {config.MANAGER_EVERY})")
+                   help=f"Hélène corrige les propositions tous les N tours (défaut {config.MANAGER_EVERY})")
     p.add_argument("--marche", choices=["reel", "simule"], default="reel",
                    help="reel : vrais prix DVF · simule : marché et annonces fictifs, pour tester hors ligne")
     a = p.parse_args()

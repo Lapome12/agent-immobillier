@@ -11,29 +11,31 @@ MANAGER_EFFORT = os.environ.get("MANAGER_EFFORT", "high")
 WEB_SEARCH = os.environ.get("IMMO_WEB_SEARCH", "1") == "1"
 MAX_RECHERCHES = 8            # recherches web max par agent et par tour
 
-INITIAL_CAPITAL = 2_000_000.0  # enveloppe fictive totale, répartie à parts égales au départ
+BUDGET_MAX = 150_000.0         # prix maximum d'une proposition (frais d'agence inclus), pour chaque agent
 FRAIS_NOTAIRE = 0.08           # frais d'acquisition dans l'ancien
-FRAIS_REVENTE = 0.05           # décote appliquée à la valorisation (frais d'agence à la revente)
+FRAIS_REVENTE = 0.05           # décote appliquée à la valeur de marché (frais d'agence à la revente)
 CHARGES_LOCATIVES = 0.25       # part des loyers perdue en charges, taxe foncière, vacance, gestion
-TRAVAUX_PAR_MOIS = 15_000.0    # rythme des travaux : pas de loyer tant qu'ils ne sont pas finis
+
+# Les 5 propositions demandées à chaque agent, à chaque tour
+CATEGORIES = {
+    "chere": "La plus chère : le meilleur bien que le budget permet (emplacement, qualité)",
+    "pas_chere": "La moins chère : le ticket d'entrée le plus bas qui reste un placement sain",
+    "bon_plan": "Le bon plan : la meilleure affaire du moment (prix nettement sous le marché, potentiel)",
+    "choix_agent": "Au choix de l'agent : ce qu'il juge le plus intéressant, selon sa stratégie",
+}
+ORDRE = ["chere", "pas_chere", "bon_plan", "choix_agent", "choix_agent"]
 
 # Règles appliquées par le code, quoi que décident les agents
-MAX_ACHATS_PAR_TOUR = 1
-MAX_PART_PAR_BIEN = 0.6        # un bien ne peut pas coûter plus de 60 % du compte de l'agent
-MAX_OPPORTUNITES = 3           # opportunités présentées par agent et par tour
-PRIX_SUSPECT = 0.4             # prix au m² < 40 % de la médiane du secteur : annonce rejetée (erreur, viager, arnaque)
+PRIX_SUSPECT = 0.4             # prix au m² < 40 % de la médiane du secteur : annonce signalée (erreur, viager, arnaque)
 RENDEMENT_BRUT_MAX = 0.15      # loyer annoncé plafonné à 15 % de rendement brut
-MIN_AGENT_ALLOCATION = 0.10    # le manager doit laisser au moins 10 % à chaque agent
-MAX_AGENT_ALLOCATION = 0.40    # et au plus 40 %
-MANAGER_EVERY = int(os.environ.get("MANAGER_EVERY", 4))  # revue du manager tous les N tours (1 tour = 1 semaine)
-SEMAINES_PAR_TOUR = 1
+MANAGER_EVERY = int(os.environ.get("MANAGER_EVERY", 1))  # Hélène corrige les propositions tous les N tours (1 tour = 1 semaine)
 
 MANAGER = {
     "name": "Hélène",
     "role": "Directrice d'investissement",
     "emoji": "🧭",
-    "persona": "Directrice d'investissement immobilier exigeante et juste. Elle récompense les dossiers "
-               "solides et chiffrés, sanctionne les paris hasardeux et parle franchement à ses agents.",
+    "persona": "Directrice d'investissement immobilier exigeante et juste. Elle vérifie chaque proposition "
+               "(avis sur le quartier, vrais prix au m², pièges) et corrige franchement ses agents.",
 }
 
 HYERES = {"83069": "Hyères"}
