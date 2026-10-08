@@ -213,7 +213,7 @@ class Fonds:
             for o in opps:
                 o["round"], o["date"] = self.state["round"], self.marche.label()
             lignes = "".join(
-                f"  - {o.get('titre', '?')} : {o['prix']:,.0f} €".replace(",", "\u202f")
+                f"  - {o.get('titre', '?')} : " + f"{o['prix']:,.0f} €".replace(",", "\u202f")
                 + (f", marge {o['marge']:+.0%}, rendement net {o['rendement_net']:.1%}, score {o['score']}"
                    if o["valide"] else f" (écartée : {o['motif']})") + f" {o.get('url', '')}\n"
                 for o in opps)
