@@ -12,7 +12,7 @@ les plus intéressants pour investir, avec un **budget maximum de 150 000 € pa
 | ☀️ **Marius** | Agent Hyères | Hyères hors presqu'île de Giens : centre, Costebelle, L'Ayguade, Le Port, Les Salins |
 | 🏙️ **Chloé** | Agente Grenoble | Grenoble, Saint-Martin-d'Hères, Échirolles, Meylan |
 | ⛷️ **Bastien** | Agent stations de ski | Chamrousse, Alpe d'Huez, Les Deux Alpes, Villard-de-Lans, Les Belleville, Tignes |
-| 🔨 **Inès** | Agente presqu'île de Giens | L'Almanarre, La Capte, Le Pousset, Giens, La Madrague, La Tour Fondue (Hyères), en priorité biens à rénover ou sous-évalués |
+| 🔨 **Inès** | Agente presqu'île de Giens | L'Almanarre, La Capte, Le Pousset, Giens, La Madrague, La Tour Fondue (Hyères) et Carqueiranne, en priorité biens à rénover ou sous-évalués |
 
 Noms, personnalités, communes et fourchettes de loyers se changent dans `immo/config.py`
 (par exemple pour donner à Inès un autre territoire ou ajouter une station).

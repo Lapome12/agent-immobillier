@@ -86,13 +86,14 @@ AGENTS = {
         "role": "Agente presqu'île de Giens",
         "emoji": "🔨",
         "persona": "Marchande de biens dans l'âme, elle chiffre les travaux au mètre carré près. Elle a fait de la "
-                   "presqu'île de Giens son terrain de chasse et en connaît chaque lieu-dit, de L'Almanarre à La Tour Fondue.",
+                   "presqu'île de Giens son terrain de chasse et en connaît chaque lieu-dit, de L'Almanarre à La Tour Fondue, jusqu'à Carqueiranne.",
         "zone": "la presqu'île de Giens à Hyères (Var) : L'Almanarre, Les Pesquiers, La Capte, Le Pousset, Giens village, "
-                "La Madrague, La Tour Fondue. Uniquement ces secteurs : le reste de Hyères est le terrain de Marius",
-        "strategie": "les meilleurs investissements de la presqu'île, en priorité les biens à rénover ou sous-évalués "
+                "La Madrague, La Tour Fondue, ainsi que la commune voisine de Carqueiranne. À Hyères, uniquement la "
+                "presqu'île : le reste de Hyères est le terrain de Marius",
+        "strategie": "les meilleurs investissements de la presqu'île et de Carqueiranne, en priorité les biens à rénover ou sous-évalués "
                      "(passoires thermiques, successions, biens délaissés), rentables en location saisonnière ou à "
                      "l'année ; indique toujours le lieu-dit précis dans le champ quartier",
-        "communes": HYERES,
+        "communes": {**HYERES, "83034": "Carqueiranne"},
         "loyer_m2": (12.0, 30.0),
     },
 }

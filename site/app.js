@@ -176,7 +176,7 @@ function propText(p, i) {
 }
 
 function systemPrompt(key) {
-  const common = `Nous sommes dans une équipe de 4 agents de recherche immobilière IA en compétition, chacun sur un secteur (Hyères, Grenoble, stations de ski, presqu'île de Giens), et une directrice d'investissement IA qui vérifie et note leurs propositions. Les agents n'achètent rien : chacun propose chaque semaine 5 biens en vente (la plus chère, la moins chère, un bon plan, 2 à son choix), avec un budget max de ${money(agents.budget_max || 150000)} par bien, dans un but d'investissement pour Eliott.
+  const common = `Nous sommes dans une équipe de 4 agents de recherche immobilière IA en compétition, chacun sur un secteur (Hyères, Grenoble, stations de ski, presqu'île de Giens et Carqueiranne), et une directrice d'investissement IA qui vérifie et note leurs propositions. Les agents n'achètent rien : chacun propose chaque semaine 5 biens en vente (la plus chère, la moins chère, un bon plan, 2 à son choix), avec un budget max de ${money(agents.budget_max || 150000)} par bien, dans un but d'investissement pour Eliott.
 Semaine actuelle : ${state.round}, dernier tour : ${state.dates.at(-1) || "aucun"}.
 Classement :
 ${leaderboardText()}
