@@ -1,6 +1,6 @@
 """Agents immobiliers, version 100 % locale.
 
-Hélène (la directrice d'investissement) et les 4 agents tournent avec un modèle Ollama installé
+Hélène (la directrice d'investissement) et les 5 agents tournent avec un modèle Ollama installé
 sur ton ordinateur. Sans accès au web, les agents travaillent sur les annonces que tu déposes
 dans annonces/<agent>/ (copier-coller du texte de l'annonce + son lien). Ce script :
   - joue automatiquement un tour chaque semaine, le jour et à l'heure choisis (lundi 8h par défaut),
