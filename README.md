@@ -9,7 +9,7 @@ les plus intéressants pour investir, avec un **budget maximum de 150 000 € pa
 | Agent | Rôle | Secteur |
 |---|---|---|
 | 🧭 **Hélène** | Directrice d'investissement (manager) | Vérifie et note chaque proposition à partir d'avis et de prix au m² trouvés en ligne |
-| ☀️ **Marius** | Agent presqu'île de Giens et Carqueiranne | L'Almanarre, Le Port, Les Pesquiers, La Capte, Le Pousset, Giens, La Madrague, La Tour Fondue (Hyères) et Carqueiranne |
+| ☀️ **Marius** | Agent Hyères, focus presqu'île de Giens et Carqueiranne | Tout Hyères et Carqueiranne, dont au moins 3 propositions sur 5 sur la presqu'île de Giens ou à Carqueiranne |
 | 🏙️ **Chloé** | Agente Grenoble | Grenoble, Saint-Martin-d'Hères, Échirolles, Meylan |
 | ⛷️ **Bastien** | Agent stations de ski | Chamrousse, Alpe d'Huez, Les Deux Alpes, Villard-de-Lans, Les Belleville, Tignes |
 | 🔨 **Inès** | Agente biens à rénover | Biens à forte décote (DPE F/G, travaux) sur les trois territoires |

@@ -46,16 +46,17 @@ STATIONS = {"38567": "Chamrousse", "38191": "Huez (Alpe d'Huez)", "38253": "Les 
 AGENTS = {
     "hyeres": {
         "name": "Marius",
-        "role": "Agent presqu'île de Giens et Carqueiranne",
+        "role": "Agent Hyères, focus presqu'île de Giens et Carqueiranne",
         "emoji": "☀️",
-        "persona": "Varois pur jus, il connaît chaque lieu-dit de la presqu'île de Giens, de L'Almanarre à La Tour "
-                   "Fondue, jusqu'à Carqueiranne. Il arbitre entre location à l'année et saisonnière et se méfie des "
-                   "prix gonflés en bord de mer.",
-        "zone": "la presqu'île de Giens à Hyères (Var) : L'Almanarre, Le Port, Les Pesquiers, La Capte, Le Pousset, "
-                "Giens village, La Madrague, La Tour Fondue, ainsi que la commune voisine de Carqueiranne. À Hyères, "
-                "uniquement ces secteurs (pas le centre-ville ni Costebelle)",
+        "persona": "Varois pur jus, il connaît chaque quartier de Hyères et chaque lieu-dit de la presqu'île de Giens, "
+                   "jusqu'à Carqueiranne. Il arbitre entre location à l'année et saisonnière et se méfie des prix "
+                   "gonflés en bord de mer.",
+        "zone": "Hyères-les-Palmiers (Var) et Carqueiranne, avec un focus sur la presqu'île de Giens (L'Almanarre, "
+                "Le Port, Les Pesquiers, La Capte, Le Pousset, Giens village, La Madrague, La Tour Fondue) et "
+                "Carqueiranne : au moins 3 de tes 5 propositions doivent s'y trouver, le reste de Hyères (centre-ville, "
+                "Costebelle, L'Ayguade…) reste possible pour les autres",
         "strategie": "appartements et maisons avec un bon rapport prix / emplacement, rentables en location "
-                     "à l'année ou saisonnière ; indique toujours le lieu-dit précis dans le champ quartier",
+                     "à l'année ou saisonnière ; indique toujours le quartier ou lieu-dit précis",
         "communes": {**HYERES, "83034": "Carqueiranne"},
         "loyer_m2": (12.0, 28.0),   # fourchette plausible de loyer mensuel au m² (€)
     },
