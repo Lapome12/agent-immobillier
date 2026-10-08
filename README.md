@@ -73,6 +73,17 @@ Chaque partie est sauvegardée dans `runs/<mode>/` :
 
 Les prix DVF sont téléchargés depuis data.gouv.fr et gardés dans `cache/dvf/`.
 
+## L'interface graphique
+
+Comme pour l'Arène des traders, le dossier `site/` est un tableau de bord interactif : meilleures
+opportunités (avec liens), cartes des agents, courbes de performance, biens achetés, décisions d'Hélène,
+journal, et une **discussion en direct avec chaque agent** (clique sur sa carte).
+
+- Sur GitHub Pages : publié automatiquement après chaque tour (voir plus bas).
+- En local : `python main.py export --out _site` puis `python -m http.server -d _site`, ou `lancer_local.bat`.
+- Sur claude.ai, sans GitHub : `python main.py artifact` produit une page unique à publier comme Artifact ;
+  la discussion passe alors par ton compte Claude, sans clé API.
+
 ## Automatique sur GitHub
 
 Le workflow `.github/workflows/immobilier.yml` joue un tour **chaque lundi matin**, sauvegarde la partie
@@ -87,7 +98,7 @@ dans le dépôt et publie le rapport sur GitHub Pages.
 ## Version 100 % locale (Ollama)
 
 Double-clic sur `lancer_local.bat` (même installation que pour l'Arène des traders, voir son `GUIDE_LOCAL.md`).
-Le rapport s'ouvre sur http://localhost:8001 avec un bouton « Lancer un tour », et un tour est joué chaque
+Le tableau de bord s'ouvre sur http://localhost:8001 avec un bouton « Lancer un tour » et la discussion avec les agents, et un tour est joué chaque
 lundi à 8h tant que la fenêtre reste ouverte (`--jour`, `--heure` pour changer). Un modèle local n'a pas accès
 au web : les agents travaillent alors uniquement sur les annonces que tu déposes dans `annonces/`.
 `--marche simule` permet de tester sans Internet.
@@ -102,8 +113,9 @@ Pour réduire : `AGENT_EFFORT=low`, `IMMO_MODEL=claude-sonnet-5-5`, ou `IMMO_WEB
 ## Structure
 
 ```
-main.py               lancement (sim, live, report, export)
-local.py              version locale : tour hebdomadaire + rapport sur localhost (Ollama)
+main.py               lancement (sim, live, report, export, artifact)
+local.py              version locale : tour hebdomadaire + tableau de bord sur localhost (Ollama)
+site/                 interface graphique (tableau de bord + discussion avec les agents)
 lancer_local.bat      lanceur Windows de la version locale
 annonces/             annonces à faire étudier, un dossier par agent
 .github/workflows/    tour hebdomadaire automatique + publication GitHub Pages

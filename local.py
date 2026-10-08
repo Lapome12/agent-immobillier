@@ -5,12 +5,14 @@ sur ton ordinateur. Sans accès au web, les agents travaillent sur les annonces 
 dans annonces/<agent>/ (copier-coller du texte de l'annonce + son lien). Ce script :
   - joue automatiquement un tour chaque semaine, le jour et à l'heure choisis (lundi 8h par défaut),
     et rattrape le tour si l'ordinateur était éteint à ce moment-là ;
-  - sert le rapport sur http://localhost:8001, avec un bouton « Lancer un tour ».
+  - sert le tableau de bord sur http://localhost:8001, avec un bouton « Lancer un tour »
+    et la discussion avec chaque agent (sans clé API, via Ollama).
 
 Usage : python local.py [--jour lundi] [--heure 08:00] [--modele qwen3:8b] [--port 8001] [--marche simule]
 """
 import argparse
 import json
+import mimetypes
 import threading
 import time
 import traceback
@@ -25,6 +27,7 @@ from immo.engine import Fonds
 from immo.report import build
 
 ROOT = Path(__file__).parent
+SITE = ROOT / "site"
 STATE_DIR = ROOT / "runs" / "local"
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 
@@ -99,13 +102,26 @@ def make_handler(arene):
             self.wfile.write(data)
 
         def do_GET(self):
-            if self.path.split("?")[0] == "/api/info":
-                return self._send(200, {"model": arene.brain.model, "running": arene.running, "error": arene.last_error})
-            if not (STATE_DIR / "state.json").exists():
-                msg = "<p style='font:16px system-ui;padding:24px'>Aucun tour joué pour le moment. " \
-                      "<button onclick=\"fetch('/api/tour',{method:'POST'}).then(()=>this.textContent='Tour lancé…')\">Lancer un tour</button></p>"
-                return self._send(200, msg.encode(), "text/html; charset=utf-8")
-            self._send(200, build(STATE_DIR, local=True).read_bytes(), "text/html; charset=utf-8")
+            path = self.path.split("?")[0]
+            if path == "/api/info":
+                return self._send(200, {"mode": "local", "model": arene.brain.model, "running": arene.running,
+                                        "error": arene.last_error, "jour": arene.jour, "heure": arene.heure})
+            if path == "/data/agents.json":
+                return self._send(200, {"manager": config.MANAGER, "agents": config.AGENTS, "model": arene.brain.model,
+                                        "manager_every": config.MANAGER_EVERY})
+            if path == "/rapport.html" and (STATE_DIR / "state.json").exists():
+                return self._send(200, build(STATE_DIR, local=True).read_bytes(), "text/html; charset=utf-8")
+            if path.startswith("/data/"):
+                f = STATE_DIR / path[len("/data/"):]
+            else:
+                f = SITE / (path.lstrip("/") or "index.html")
+            f = f.resolve()
+            if not (f.is_relative_to(SITE.resolve()) or f.is_relative_to(STATE_DIR.resolve())) or not f.is_file():
+                return self._send(404, {"error": "introuvable"})
+            ctype = mimetypes.guess_type(f.name)[0] or "application/octet-stream"
+            if ctype.startswith("text/") or f.suffix == ".js":
+                ctype = ("text/javascript" if f.suffix == ".js" else ctype) + "; charset=utf-8"
+            self._send(200, f.read_bytes(), ctype)
 
         def do_POST(self):
             if self.path == "/api/tour":
@@ -113,6 +129,12 @@ def make_handler(arene):
                     return self._send(409, {"error": "Un tour est déjà en cours."})
                 threading.Thread(target=arene.play_round, daemon=True).start()
                 return self._send(202, {"ok": True})
+            if self.path == "/api/chat":
+                body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
+                try:
+                    return self._send(200, {"text": arene.brain.chat(body.get("system", ""), body.get("messages", []))})
+                except Exception as e:
+                    return self._send(502, {"error": str(e)})
             self._send(404, {"error": "introuvable"})
 
     return Handler
@@ -155,7 +177,7 @@ def main():
         print(f"Tour automatique chaque {a.jour} à {a.heure} (garde cette fenêtre ouverte).")
     url = f"http://localhost:{a.port}"
     server = ThreadingHTTPServer(("127.0.0.1", a.port), make_handler(arene))
-    print(f"Rapport : {url}   (Ctrl+C pour arrêter)")
+    print(f"Tableau de bord : {url}   (Ctrl+C pour arrêter)")
     if not a.sans_navigateur:
         webbrowser.open(url)
     try:

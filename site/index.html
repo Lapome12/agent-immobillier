@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agents immobiliers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="wrap head">
+    <div>
+      <h1>Agents immobiliers</h1>
+      <p class="muted" id="subtitle">Chargement…</p>
+    </div>
+    <div class="head-actions">
+      <a id="run-link" class="btn ghost" target="_blank" rel="noopener">Lancer un tour</a>
+      <button id="key-btn" class="btn ghost" type="button">Clé API</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="kpis" id="kpis"></section>
+
+  <section>
+    <h2>Meilleures opportunités du moment</h2>
+    <p class="muted small">Marge : valeur au prix médian des ventes réelles du secteur (DVF, moins 5 % de frais de revente)
+      comparée au coût total (prix + 8 % de notaire + travaux). Rendement net : loyer × 12 × 75 % / coût total.
+      Vérifie toujours l'annonce avant de te déplacer.</p>
+    <div class="table-wrap" id="best"></div>
+  </section>
+
+  <section>
+    <h2>L'équipe</h2>
+    <p class="muted small">Clique sur un agent pour discuter avec lui.</p>
+    <div class="agents" id="agents"></div>
+  </section>
+
+  <section>
+    <h2>Performance</h2>
+    <div class="legend" id="legend"></div>
+    <div id="chart"></div>
+  </section>
+
+  <section>
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="biens" role="tab">Biens achetés</button>
+      <button class="tab" data-tab="reviews" role="tab">Décisions de la directrice</button>
+      <button class="tab" data-tab="journal" role="tab">Journal</button>
+    </div>
+    <div id="tab-biens" class="tab-panel"></div>
+    <div id="tab-reviews" class="tab-panel hidden"></div>
+    <div id="tab-journal" class="tab-panel hidden"></div>
+  </section>
+  <p class="muted small foot">Investissement fictif : les annonces et les prix sont réels, les achats et les loyers sont simulés.</p>
+</main>
+
+<aside id="chat" class="chat hidden" aria-label="Discussion">
+  <div class="chat-head">
+    <div class="avatar" id="chat-avatar"></div>
+    <div><b id="chat-name"></b><div class="muted small" id="chat-role"></div></div>
+    <button class="icon" id="chat-close" type="button" aria-label="Fermer">✕</button>
+  </div>
+  <div class="chat-log" id="chat-log"></div>
+  <form class="chat-form" id="chat-form">
+    <textarea id="chat-input" rows="2" placeholder="Pose une question…" required></textarea>
+    <button class="btn" type="submit" id="chat-send">Envoyer</button>
+  </form>
+</aside>
+
+<dialog id="key-dialog">
+  <form method="dialog" class="key-form">
+    <h3>Clé API Anthropic (facultative)</h3>
+    <p class="small muted">Elle sert seulement à discuter avec les agents sur ce site ; les tours de prospection
+      utilisent ton abonnement Claude. Sans clé, tu peux discuter avec eux dans ton projet Claude. Elle reste uniquement dans ce navigateur
+      (jamais envoyée à GitHub) et part directement vers l'API Anthropic.
+      Crée une clé dédiée avec une limite de dépense sur console.anthropic.com.</p>
+    <input id="key-input" type="password" placeholder="sk-ant-…" autocomplete="off">
+    <div class="row">
+      <button class="btn ghost" value="clear" type="submit">Effacer</button>
+      <button class="btn" value="save" type="submit">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 """Point d'entrée : python main.py {sim,live,report,export} [options]"""
 import argparse
+import json
 import shutil
 import sys
 from pathlib import Path
@@ -11,11 +12,52 @@ from immo.marche import MarcheDVF, MarcheSimule
 from immo.report import build
 
 
+def agents_json():
+    return {"manager": config.MANAGER, "agents": config.AGENTS, "model": config.MODEL, "manager_every": config.MANAGER_EVERY}
+
+
+def export_site(state_dir, out):
+    """Copie le site web et y ajoute les données de la partie (state.json, journal, agents)."""
+    out, src = Path(out), Path(state_dir)
+    shutil.copytree(Path(__file__).parent / "site", out, dirs_exist_ok=True)
+    data = out / "data"
+    data.mkdir(exist_ok=True)
+    (data / "agents.json").write_text(json.dumps(agents_json(), ensure_ascii=False, indent=1), encoding="utf-8")
+    for name in ("state.json", "journal.md"):
+        if (src / name).exists():
+            shutil.copy(src / name, data / name)
+    if (src / "state.json").exists():
+        shutil.copy(build(src), out / "rapport.html")
+    return out
+
+
+def build_artifact(state_dir, out):
+    """Une seule page HTML autonome (pour un Artifact claude.ai) : site + données intégrées."""
+    src, site = Path(state_dir), Path(__file__).parent / "site"
+    data = {
+        "agents": agents_json(),
+        "state": json.loads((src / "state.json").read_text(encoding="utf-8")),
+        "journal": (src / "journal.md").read_text(encoding="utf-8") if (src / "journal.md").exists() else "",
+    }
+    page = (site / "index.html").read_text(encoding="utf-8")
+    head, body = page.split("<body>", 1)
+    body = body.split("</body>", 1)[0]
+    payload = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
+    fonts = "".join(line + "\n" for line in head.splitlines() if "fonts.g" in line)
+    html = (f"<title>Agents immobiliers</title>\n{fonts}<style>\n{(site / 'style.css').read_text(encoding='utf-8')}</style>\n"
+            + body.replace('<script type="module" src="app.js"></script>', "")
+            + f'<script type="application/json" id="immo-data">{payload}</script>\n'
+            + f'<script type="module">\n{(site / "app.js").read_text(encoding="utf-8")}</script>\n')
+    Path(out).write_text(html, encoding="utf-8")
+    return out
+
+
 def main():
     p = argparse.ArgumentParser(description="4 agents immobiliers IA en compétition + 1 directrice d'investissement (argent fictif).")
-    p.add_argument("mode", choices=["sim", "live", "report", "export"],
+    p.add_argument("mode", choices=["sim", "live", "report", "export", "artifact"],
                    help="sim : marché et annonces simulés · live : un tour sur les vrais prix DVF et de vraies annonces "
-                        "(à lancer chaque semaine) · report : régénère le rapport · export : prépare le site (dossier --out)")
+                        "(à lancer chaque semaine) · report : régénère le rapport · export : prépare le site (dossier --out) · "
+                        "artifact : une page unique à publier sur claude.ai")
     p.add_argument("--rounds", type=int, default=20, help="nombre de semaines (sim)")
     p.add_argument("--mock", action="store_true", help="stratégie simple à la place de Claude (gratuit, pour tester)")
     p.add_argument("--brain", choices=["auto", "api", "abonnement", "local"], default="auto",
@@ -30,16 +72,11 @@ def main():
     if a.mode == "report":
         print(build(state_dir))
         return
+    if a.mode == "artifact":
+        print(build_artifact(state_dir, a.out if a.out != "_site" else "agents-immobiliers.html"))
+        return
     if a.mode == "export":
-        out = Path(a.out)
-        out.mkdir(parents=True, exist_ok=True)
-        if not (Path(state_dir) / "state.json").exists():  # aucun tour joué pour le moment
-            (out / "index.html").write_text("<!doctype html><meta charset=utf-8><title>Agents immobiliers</title>"
-                                            "<p style='font:16px system-ui;padding:24px'>Aucun tour joué pour le moment.</p>",
-                                            encoding="utf-8")
-        else:
-            shutil.copy(build(state_dir), out / "index.html")
-        print(out / "index.html")
+        print(export_site(state_dir, a.out))
         return
 
     brain = make_brain("mock" if a.mock else {"abonnement": "code"}.get(a.brain, a.brain))
