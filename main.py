@@ -33,7 +33,12 @@ def main():
     if a.mode == "export":
         out = Path(a.out)
         out.mkdir(parents=True, exist_ok=True)
-        shutil.copy(build(state_dir), out / "index.html")
+        if not (Path(state_dir) / "state.json").exists():  # aucun tour joué pour le moment
+            (out / "index.html").write_text("<!doctype html><meta charset=utf-8><title>Agents immobiliers</title>"
+                                            "<p style='font:16px system-ui;padding:24px'>Aucun tour joué pour le moment.</p>",
+                                            encoding="utf-8")
+        else:
+            shutil.copy(build(state_dir), out / "index.html")
         print(out / "index.html")
         return
 
