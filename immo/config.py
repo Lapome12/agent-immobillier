@@ -48,9 +48,10 @@ AGENTS = {
         "name": "Marius",
         "role": "Agent Hyères",
         "emoji": "☀️",
-        "persona": "Varois pur jus, il connaît chaque quartier de Hyères, de Costebelle à la presqu'île de Giens. "
+        "persona": "Varois pur jus, il connaît chaque quartier de Hyères, de Costebelle au port. "
                    "Il arbitre entre location à l'année et saisonnière et se méfie des prix gonflés en bord de mer.",
-        "zone": "Hyères-les-Palmiers (Var) : centre-ville, Costebelle, L'Ayguade, Le Port, Giens",
+        "zone": "Hyères-les-Palmiers (Var) hors presqu'île de Giens (réservée à Inès) : centre-ville, Costebelle, "
+                "L'Ayguade, Le Port, Les Salins",
         "strategie": "appartements et maisons avec un bon rapport prix / emplacement, rentables en location "
                      "à l'année ou saisonnière",
         "communes": HYERES,
@@ -82,15 +83,17 @@ AGENTS = {
     },
     "renovation": {
         "name": "Inès",
-        "role": "Agente biens à rénover",
+        "role": "Agente presqu'île de Giens",
         "emoji": "🔨",
-        "persona": "Marchande de biens dans l'âme, elle chiffre les travaux au mètre carré près. Elle chasse "
-                   "les passoires thermiques (DPE F et G), les successions et les biens délaissés à forte décote.",
-        "zone": "les trois territoires de l'équipe : Hyères, l'agglomération grenobloise et les stations",
-        "strategie": "biens à rénover achetés nettement sous le prix du marché, dont la valeur après "
-                     "travaux dépasse largement le coût total (prix + frais + travaux)",
-        "communes": {**HYERES, **GRENOBLE, **STATIONS},
-        "loyer_m2": (9.0, 30.0),
+        "persona": "Marchande de biens dans l'âme, elle chiffre les travaux au mètre carré près. Elle a fait de la "
+                   "presqu'île de Giens son terrain de chasse et en connaît chaque lieu-dit, de L'Almanarre à La Tour Fondue.",
+        "zone": "la presqu'île de Giens à Hyères (Var) : L'Almanarre, Les Pesquiers, La Capte, Le Pousset, Giens village, "
+                "La Madrague, La Tour Fondue. Uniquement ces secteurs : le reste de Hyères est le terrain de Marius",
+        "strategie": "les meilleurs investissements de la presqu'île, en priorité les biens à rénover ou sous-évalués "
+                     "(passoires thermiques, successions, biens délaissés), rentables en location saisonnière ou à "
+                     "l'année ; indique toujours le lieu-dit précis dans le champ quartier",
+        "communes": HYERES,
+        "loyer_m2": (12.0, 30.0),
     },
 }
 

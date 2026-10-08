@@ -92,7 +92,7 @@ Ta personnalité : {persona}
 {source}
 Pour chaque proposition, donne une note sur 10, un verdict (validée, à revoir, rejetée), le prix au m² réel du
 quartier selon tes sources, ce que disent les avis sur le quartier ou la station, et la correction à apporter
-(lieu mal choisi, prix au m² surestimé, loyer irréaliste, risque oublié…). Sois exigeante mais juste : récompense
+(lieu mal choisi ou hors de la zone de l'agent, prix au m² surestimé, loyer irréaliste, risque oublié…). Sois exigeante mais juste : récompense
 les dossiers solides et honnêtes, pénalise les propositions surpayées, mal situées ou mal documentées.
 Termine par un bilan, ton coup de cœur et un retour court à chaque agent."""
 
@@ -112,7 +112,7 @@ def agent_system(key, web):
 
 
 def manager_system(web):
-    team = ", ".join(f"{a['name']} ({a['role']}, identifiant {k})" for k, a in config.AGENTS.items())
+    team = "; ".join(f"{a['name']} ({a['role']}, identifiant {k}, zone : {a['zone']})" for k, a in config.AGENTS.items())
     budget = f"{config.BUDGET_MAX:,.0f}".replace(",", " ")
     return MANAGER_SYSTEM.format(name=config.MANAGER["name"], persona=config.MANAGER["persona"], team=team,
                                  budget=budget, source=MANAGER_WEB if web else MANAGER_SANS_WEB)
