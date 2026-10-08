@@ -33,6 +33,9 @@ class Fonds:
         self.errors, self.failures = [], 0
         if self.state_file.exists():
             self.state = json.loads(self.state_file.read_text(encoding="utf-8"))
+            for k in config.AGENTS:  # agent ajouté après coup
+                self.state["agents"].setdefault(k, {"analyse": "", "notes": "", "feedback": "", "propositions": [],
+                                                    "notes_tours": []})
         else:
             self.state = {
                 "round": 0, "dates": [], "reviews": [],

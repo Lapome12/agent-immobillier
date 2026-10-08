@@ -1,4 +1,4 @@
-# Agents immobiliers IA : 4 agents de recherche en compétition + 1 directrice d'investissement
+# Agents immobiliers IA : 5 agents de recherche en compétition + 1 directrice d'investissement
 
 Même principe que l'[Arène des traders](https://github.com/Lapome12/arene-des-traders), appliqué à l'immobilier.
 Les agents **n'achètent rien** : chaque semaine, ils cherchent de vraies annonces en ligne et proposent les biens
@@ -9,9 +9,10 @@ les plus intéressants pour investir, avec un **budget maximum de 150 000 € pa
 | Agent | Rôle | Secteur |
 |---|---|---|
 | 🧭 **Hélène** | Directrice d'investissement (manager) | Vérifie et note chaque proposition à partir d'avis et de prix au m² trouvés en ligne |
-| ☀️ **Marius** | Agent presqu'île de Giens et Carqueiranne | L'Almanarre, Le Port, Les Pesquiers, La Capte, Le Pousset, Giens, La Madrague, La Tour Fondue (Hyères) et Carqueiranne |
+| ☀️ **Marius** | Agent Hyères | Hyères : centre, Costebelle, L'Ayguade, Le Port, Giens |
 | 🏙️ **Chloé** | Agente Grenoble | Grenoble, Saint-Martin-d'Hères, Échirolles, Meylan |
 | ⛷️ **Bastien** | Agent stations de ski | Chamrousse, Alpe d'Huez, Les Deux Alpes, Villard-de-Lans, Les Belleville, Tignes |
+| 🏝️ **Lou** | Agente presqu'île de Giens et Carqueiranne | L'Almanarre, Le Port, Les Pesquiers, La Capte, Le Pousset, Giens, La Madrague, La Tour Fondue (Hyères) et Carqueiranne |
 | 🔨 **Inès** | Agente biens à rénover | Biens à forte décote (DPE F/G, travaux) sur les trois territoires |
 
 Noms, personnalités, communes et fourchettes de loyers se changent dans `immo/config.py`
@@ -36,7 +37,7 @@ Noms, personnalités, communes et fourchettes de loyers se changent dans `immo/c
 Le budget, les catégories et la fréquence des revues se règlent dans `immo/config.py`.
 
 Tu peux aussi **donner des annonces à étudier** : colle le texte d'une annonce et son lien dans un fichier
-`.txt` du dossier `annonces/<agent>/` (`hyeres`, `grenoble`, `station`, `renovation`). L'agent l'étudie en
+`.txt` du dossier `annonces/<agent>/` (`hyeres`, `grenoble`, `station`, `giens`, `renovation`). L'agent l'étudie en
 priorité au tour suivant.
 
 ## Installation
@@ -100,7 +101,7 @@ au web : les agents travaillent alors uniquement sur les annonces que tu dépose
 
 ## Coût indicatif
 
-Un tour = 5 appels Claude avec recherche web (4 agents + Hélène). Avec l'abonnement,
+Un tour = 6 appels Claude avec recherche web (5 agents + Hélène). Avec l'abonnement,
 ces appels comptent dans tes limites d'usage ; avec une clé API, ils sont facturés (recherche web comprise).
 Pour réduire : `AGENT_EFFORT=low`, `IMMO_MODEL=claude-sonnet-5-5`, ou `IMMO_WEB_SEARCH=0`
 (les agents ne travaillent alors que sur les annonces déposées).

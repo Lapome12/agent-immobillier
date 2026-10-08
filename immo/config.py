@@ -46,18 +46,15 @@ STATIONS = {"38567": "Chamrousse", "38191": "Huez (Alpe d'Huez)", "38253": "Les 
 AGENTS = {
     "hyeres": {
         "name": "Marius",
-        "role": "Agent presqu'île de Giens et Carqueiranne",
+        "role": "Agent Hyères",
         "emoji": "☀️",
-        "persona": "Varois pur jus, il connaît chaque lieu-dit de la presqu'île de Giens, de L'Almanarre à La Tour "
-                   "Fondue, jusqu'à Carqueiranne. Il arbitre entre location à l'année et saisonnière et se méfie des "
-                   "prix gonflés en bord de mer.",
-        "zone": "la presqu'île de Giens à Hyères (Var) : L'Almanarre, Le Port, Les Pesquiers, La Capte, Le Pousset, "
-                "Giens village, La Madrague, La Tour Fondue, ainsi que la commune voisine de Carqueiranne. À Hyères, "
-                "uniquement ces secteurs (pas le centre-ville ni Costebelle)",
+        "persona": "Varois pur jus, il connaît chaque quartier de Hyères, de Costebelle à la presqu'île de Giens. "
+                   "Il arbitre entre location à l'année et saisonnière et se méfie des prix gonflés en bord de mer.",
+        "zone": "Hyères-les-Palmiers (Var) : centre-ville, Costebelle, L'Ayguade, Le Port, Giens",
         "strategie": "appartements et maisons avec un bon rapport prix / emplacement, rentables en location "
-                     "à l'année ou saisonnière ; indique toujours le lieu-dit précis dans le champ quartier",
-        "communes": {**HYERES, "83034": "Carqueiranne"},
-        "loyer_m2": (12.0, 28.0),   # fourchette plausible de loyer mensuel au m² (€)
+                     "à l'année ou saisonnière",
+        "communes": HYERES,
+        "loyer_m2": (11.0, 24.0),   # fourchette plausible de loyer mensuel au m² (€)
     },
     "grenoble": {
         "name": "Chloé",
@@ -82,6 +79,20 @@ AGENTS = {
                      "avec un enneigement fiable et une activité l'été",
         "communes": STATIONS,
         "loyer_m2": (10.0, 32.0),
+    },
+    "giens": {
+        "name": "Lou",
+        "role": "Agente presqu'île de Giens et Carqueiranne",
+        "emoji": "🏝️",
+        "persona": "Née à La Capte, elle connaît chaque lieu-dit de la presqu'île, de L'Almanarre à La Tour Fondue, "
+                   "jusqu'à Carqueiranne. Elle sait ce qui est inondable, ce qui se loue l'été et ce qui se loue toute l'année.",
+        "zone": "la presqu'île de Giens à Hyères (Var) : L'Almanarre, Le Port, Les Pesquiers, La Capte, Le Pousset, "
+                "Giens village, La Madrague, La Tour Fondue, ainsi que la commune voisine de Carqueiranne. À Hyères, "
+                "uniquement ces secteurs (pas le centre-ville ni Costebelle)",
+        "strategie": "les biens avec le meilleur potentiel d'investissement de la presqu'île et de Carqueiranne, "
+                     "en location saisonnière ou à l'année ; indique toujours le lieu-dit précis dans le champ quartier",
+        "communes": {**HYERES, "83034": "Carqueiranne"},
+        "loyer_m2": (12.0, 28.0),
     },
     "renovation": {
         "name": "Inès",

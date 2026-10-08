@@ -179,7 +179,7 @@ class MarcheSimule(Marche):
     """Marché fictif, sans réseau : prix médians qui évoluent doucement et annonces inventées
     (dont quelques bonnes affaires et quelques pièges), pour tester le système gratuitement."""
 
-    BASE = {"83069": 4800, "83034": 4900, "38185": 2700, "38421": 2400, "38151": 2000, "38229": 3500,
+    BASE = {"83069": 4800, "83034": 4900, "83034": 4900, "38185": 2700, "38421": 2400, "38151": 2000, "38229": 3500,
             "38567": 3600, "38191": 5200, "38253": 4600, "38548": 3300, "73257": 7800, "73296": 8200}
 
     def __init__(self, seed=42, semaine=0):
