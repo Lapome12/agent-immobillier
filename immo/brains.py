@@ -110,6 +110,8 @@ def agent_system(key, web):
     budget = f"{config.budget(key):,.0f}".replace(",", " ")
     bonus = (f"6. parfait (facultatif) : {config.CATEGORIES['parfait']}. Sois très sélectif : mieux vaut aucun "
              "« parfait » qu'un faux.\n") if a.get("parfait") else ""
+    if a.get("travaux_max"):
+        bonus += f"Plafond de travaux : {a['travaux_max']:,.0f} € maximum par bien (estimation honnête).\n".replace(",", " ")
     return AGENT_SYSTEM.format(bonus=bonus, name=a["name"], zone=a["zone"], persona=a["persona"], strategie=a["strategie"],
                                communes=communes, source=SOURCE_WEB if web else SOURCE_FOURNIE, budget=budget,
                                **{k: v for k, v in config.CATEGORIES.items() if k != "parfait"})
@@ -117,7 +119,8 @@ def agent_system(key, web):
 
 def manager_system(web):
     team = "; ".join(f"{a['name']} ({a['role']}, identifiant {k}, zone : {a['zone']}"
-                     + (f", budget max {config.budget(k):,.0f} €".replace(",", " ") if config.budget(k) != config.BUDGET_MAX else "")
+                     + (", budget max " + f"{config.budget(k):,.0f} €".replace(",", " ") if config.budget(k) != config.BUDGET_MAX else "")
+                     + (", travaux max " + f"{a['travaux_max']:,.0f} €".replace(",", " ") if a.get("travaux_max") else "")
                      + (", peut ajouter une 6e proposition « parfait »" if a.get("parfait") else "") + ")"
                      for k, a in config.AGENTS.items())
     budget = f"{config.BUDGET_MAX:,.0f}".replace(",", " ")

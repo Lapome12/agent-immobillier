@@ -65,6 +65,9 @@ class Fonds:
             motifs.append("surface ou prix invalide")
         if prix > config.budget(key):
             motifs.append(f"hors budget ({eur(prix)} > {eur(config.budget(key))})")
+        tmax = config.AGENTS[key].get("travaux_max")
+        if tmax and travaux > tmax:
+            motifs.append(f"travaux trop lourds ({eur(travaux)} > {eur(tmax)})")
         if not str(o.get("url", "")).startswith("http"):
             motifs.append("pas de lien vers l'annonce")
         if c not in toutes_communes() or surface <= 0 or prix <= 0:

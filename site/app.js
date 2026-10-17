@@ -89,7 +89,7 @@ function renderPropositions() {
     const a = agents.agents[k], t = state.agents[k];
     const rows = t.propositions.map((p) => propRow({ ...p, agent_key: k })).join("");
     return `<div class="block" style="--c:${COLORS[k]}">
-      <div class="block-head"><div class="avatar">${a.emoji}</div><div><b>${esc(a.name)}</b><div class="muted small">${esc(a.zone)}${a.budget_max ? ` · budget max ${money(a.budget_max)}` : ""}</div></div></div>
+      <div class="block-head"><div class="avatar">${a.emoji}</div><div><b>${esc(a.name)}</b><div class="muted small">${esc(a.zone)}${a.budget_max ? ` · budget max ${money(a.budget_max)}` : ""}${a.travaux_max ? ` · travaux max ${money(a.travaux_max)}` : ""}</div></div></div>
       ${rows ? `<div class="table-wrap"><table><thead><tr><th>Catégorie</th><th>Annonce</th><th>Prix</th><th>Prix au m²</th><th>Rendement net</th><th>Note d'${esc(agents.manager.name)}</th></tr></thead>${rows}</table></div>`
         : `<p class="muted">Aucune proposition cette semaine.</p>`}
       ${t.feedback ? `<p class="small"><b>Retour d'${esc(agents.manager.name)} :</b> ${esc(t.feedback)}</p>` : ""}
@@ -176,7 +176,7 @@ function propText(p, i) {
 }
 
 function systemPrompt(key) {
-  const common = `Nous sommes dans une équipe de 6 agents de recherche immobilière IA en compétition, chacun sur un secteur (Hyères, Grenoble, stations de ski, presqu'île de Giens, Mont des Oiseaux et Carqueiranne, granges et maisons à rénover en montagne, biens à rénover), et une directrice d'investissement IA qui vérifie et note leurs propositions. Les agents n'achètent rien : chacun propose chaque semaine 5 biens en vente (la plus chère, la moins chère, un bon plan, 2 à son choix), avec un budget max de ${money(agents.budget_max || 150000)} par bien (200 000 € et une 6e proposition « parfait » facultative pour Gaspard, le sniper montagne), dans un but d'investissement pour Eliott.
+  const common = `Nous sommes dans une équipe de 6 agents de recherche immobilière IA en compétition, chacun sur un secteur (Hyères, Grenoble, stations de ski, presqu'île de Giens, Mont des Oiseaux et Carqueiranne, granges et maisons à rénover en montagne, biens à rénover), et une directrice d'investissement IA qui vérifie et note leurs propositions. Les agents n'achètent rien : chacun propose chaque semaine 5 biens en vente (la plus chère, la moins chère, un bon plan, 2 à son choix), avec un budget max de ${money(agents.budget_max || 150000)} par bien (pour Gaspard, le sniper montagne : travaux limités à 100 000 € et une 6e proposition « parfait » facultative), dans un but d'investissement pour Eliott.
 Semaine actuelle : ${state.round}, dernier tour : ${state.dates.at(-1) || "aucun"}.
 Classement :
 ${leaderboardText()}

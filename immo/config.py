@@ -111,7 +111,7 @@ AGENTS = {
         "strategie": "uniquement des biens À RÉNOVER : vieilles granges, fermes, maisons de village, chalets ou "
                      "appartements anciens nécessitant de vrais travaux, achetés sous le prix du marché avec un fort "
                      "potentiel après rénovation (location saisonnière ou revente). Aucun bien en bon état. Chiffre les "
-                     "travaux, précise l'altitude et la distance aux pistes, et vérifie qu'une grange est bien habitable "
+                     "travaux (100 000 € maximum), précise l'altitude et la distance aux pistes, et vérifie qu'une grange est bien habitable "
                      "ou transformable (risque de changement de destination refusé)",
         "communes": {
             "73054": "Bourg-Saint-Maurice (Les Arcs)", "73285": "Séez", "73323": "Villaroger",
@@ -127,7 +127,7 @@ AGENTS = {
         },
         "loyer_m2": (10.0, 32.0),
         "prix_suspect": 0.2,   # granges et ruines : une forte décote sur la médiane DVF est normale
-        "budget_max": 200_000.0,
+        "travaux_max": 100_000.0,  # plafond du budget travaux estimé
         "parfait": True,       # 6e proposition facultative « parfait »
     },
     "renovation": {
