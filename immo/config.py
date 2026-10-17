@@ -79,6 +79,7 @@ AGENTS = {
                      "avec un enneigement fiable et une activité l'été",
         "communes": STATIONS,
         "loyer_m2": (10.0, 32.0),
+        "prix_suspect": 0.2,   # granges et ruines : une forte décote sur la médiane DVF est normale
     },
     "giens": {
         "name": "Lou",

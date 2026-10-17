@@ -75,7 +75,7 @@ class Fonds:
         loyer = min(loyer_annonce, hi * surface, config.RENDEMENT_BRUT_MAX * prix / 12)
         cout = prix * (1 + config.FRAIS_NOTAIRE) + travaux
         valeur = surface * med * (1 - config.FRAIS_REVENTE)
-        if ratio < config.PRIX_SUSPECT:
+        if ratio < config.AGENTS[key].get("prix_suspect", config.PRIX_SUSPECT):
             motifs.append(f"prix suspect ({ratio:.0%} de la médiane du secteur)")
         o.update(
             surface_m2=surface, prix=prix, travaux_estimes=travaux,
