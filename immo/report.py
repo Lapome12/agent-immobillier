@@ -8,7 +8,7 @@ from . import config
 from .config import display
 
 COLORS = {"hyeres": "#d9781c", "grenoble": "#2a78d6", "station": "#23915a", "giens": "#0f8f9c", "sniper": "#9a5b2e", "renovation": "#8e4fb3"}
-LIBELLES = {"chere": "La plus chère", "pas_chere": "La moins chère", "bon_plan": "Bon plan", "choix_agent": "Choix de l'agent"}
+LIBELLES = {"chere": "La plus chère", "pas_chere": "La moins chère", "bon_plan": "Bon plan", "choix_agent": "Choix de l'agent", "parfait": "★ Parfait"}
 esc = lambda s: html.escape(str(s if s is not None else ""))
 eur = lambda x: f"{x:,.0f} €".replace(",", " ")
 

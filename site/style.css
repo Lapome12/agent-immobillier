@@ -67,7 +67,7 @@ td a{color:var(--accent)} td .small{display:block} .num{font-family:var(--mono);
 .block-head{display:flex;gap:10px;align-items:center;margin-bottom:8px}
 .block-head .avatar{background:color-mix(in srgb,var(--c) 18%,transparent)}
 .cat{font-size:12px;font-weight:600;white-space:nowrap;border-radius:99px;padding:2px 8px;border:1px solid var(--line)}
-.cat-chere{color:var(--bad)} .cat-pas_chere{color:var(--good)} .cat-bon_plan{color:var(--accent)} .cat-choix_agent{color:var(--muted)}
+.cat-chere{color:var(--bad)} .cat-pas_chere{color:var(--good)} .cat-bon_plan{color:var(--accent)} .cat-choix_agent{color:var(--muted)} .cat-parfait{color:var(--warn);font-weight:600}
 .chip.good{color:var(--good);border-color:currentColor} .chip.warn{color:var(--warn);border-color:currentColor} .chip.bad{color:var(--bad);border-color:currentColor}
 .score{display:block;font-size:16px}
 #coup .review{border-left:4px solid var(--manager);margin-top:20px}

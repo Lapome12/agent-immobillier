@@ -11,7 +11,7 @@ from . import config
 # ---------- Formats de réponse imposés aux agents ----------
 
 class Proposition(BaseModel):
-    categorie: str = Field(description="« chere », « pas_chere », « bon_plan » ou « choix_agent »")
+    categorie: str = Field(description="« chere », « pas_chere », « bon_plan », « choix_agent » ou « parfait » (si autorisé)")
     titre: str = Field(description="Ex. : « T2 45 m² rénové, quartier Europole »")
     url: str = Field(description="Lien de l'annonce (obligatoire)")
     commune_insee: str = Field(description="Code INSEE de la commune, parmi ceux de ta zone")
@@ -28,13 +28,13 @@ class Proposition(BaseModel):
 
 class AgentDecision(BaseModel):
     analyse_marche: str = Field(description="Lecture du marché de ta zone en 2 à 4 phrases")
-    propositions: List[Proposition] = Field(description="Exactement 5 propositions : chere, pas_chere, bon_plan, choix_agent, choix_agent")
+    propositions: List[Proposition] = Field(description="5 propositions : chere, pas_chere, bon_plan, choix_agent, choix_agent (+ une 6e « parfait » facultative si tu y as droit)")
     note_pour_plus_tard: str = Field(description="Ce que tu veux te rappeler au prochain tour")
 
 
 class Correction(BaseModel):
     agent: str = Field(description="Identifiant de l'agent")
-    numero: int = Field(description="Numéro de la proposition (0 à 4)")
+    numero: int = Field(description="Numéro de la proposition (0 à 4, ou 5 pour une proposition « parfait »)")
     note: float = Field(description="Note de 0 à 10")
     verdict: str = Field(description="« validée », « à revoir » ou « rejetée »")
     prix_m2_constate: float = Field(description="Prix au m² réel du quartier selon tes sources (0 si inconnu)")
@@ -72,7 +72,7 @@ Tu présentes exactement 5 propositions, dans cet ordre :
 2. pas_chere : {pas_chere}
 3. bon_plan : {bon_plan}
 4. et 5. choix_agent : {choix_agent}
-{source}
+{bonus}{source}
 Communes autorisées (code INSEE : nom) : {communes}.
 Le code vérifie tes chiffres : il compare le prix au m² à la médiane DVF du secteur, plafonne les loyers irréalistes
 et signale les annonces sans lien, hors budget ou au prix suspect.
@@ -94,6 +94,8 @@ Pour chaque proposition, donne une note sur 10, un verdict (validée, à revoir,
 quartier selon tes sources, ce que disent les avis sur le quartier ou la station, et la correction à apporter
 (lieu mal choisi ou hors de la zone de l'agent, prix au m² surestimé, loyer irréaliste, risque oublié…). Sois exigeante mais juste : récompense
 les dossiers solides et honnêtes, pénalise les propositions surpayées, mal situées ou mal documentées.
+Une proposition « parfait » doit être exceptionnelle : sois particulièrement exigeante et rejette-la si elle ne
+coche pas toutes les cases.
 Termine par un bilan, ton coup de cœur et un retour court à chaque agent."""
 
 MANAGER_WEB = ("Vérifie avec des recherches en ligne : avis d'habitants sur les quartiers et les stations (sites d'avis "
@@ -105,14 +107,19 @@ MANAGER_SANS_WEB = "Tu n'as pas accès au web : appuie-toi sur les prix DVF four
 def agent_system(key, web):
     a = config.AGENTS[key]
     communes = ", ".join(f"{c} : {n}" for c, n in a["communes"].items())
-    budget = f"{config.BUDGET_MAX:,.0f}".replace(",", " ")
-    return AGENT_SYSTEM.format(name=a["name"], zone=a["zone"], persona=a["persona"], strategie=a["strategie"],
+    budget = f"{config.budget(key):,.0f}".replace(",", " ")
+    bonus = (f"6. parfait (facultatif) : {config.CATEGORIES['parfait']}. Sois très sélectif : mieux vaut aucun "
+             "« parfait » qu'un faux.\n") if a.get("parfait") else ""
+    return AGENT_SYSTEM.format(bonus=bonus, name=a["name"], zone=a["zone"], persona=a["persona"], strategie=a["strategie"],
                                communes=communes, source=SOURCE_WEB if web else SOURCE_FOURNIE, budget=budget,
-                               **config.CATEGORIES)
+                               **{k: v for k, v in config.CATEGORIES.items() if k != "parfait"})
 
 
 def manager_system(web):
-    team = "; ".join(f"{a['name']} ({a['role']}, identifiant {k}, zone : {a['zone']})" for k, a in config.AGENTS.items())
+    team = "; ".join(f"{a['name']} ({a['role']}, identifiant {k}, zone : {a['zone']}"
+                     + (f", budget max {config.budget(k):,.0f} €".replace(",", " ") if config.budget(k) != config.BUDGET_MAX else "")
+                     + (", peut ajouter une 6e proposition « parfait »" if a.get("parfait") else "") + ")"
+                     for k, a in config.AGENTS.items())
     budget = f"{config.BUDGET_MAX:,.0f}".replace(",", " ")
     return MANAGER_SYSTEM.format(name=config.MANAGER["name"], persona=config.MANAGER["persona"], team=team,
                                  budget=budget, source=MANAGER_WEB if web else MANAGER_SANS_WEB)
@@ -278,7 +285,7 @@ class MockBrain:
     def agent(self, key, prompt):
         data = json.loads(prompt.split("DONNÉES_JSON:", 1)[1])
         meds = {c: s["mediane_m2"] for c, s in data["marche"].items()}
-        ann = [a for a in data.get("annonces_simulees", []) if a["prix"] <= config.BUDGET_MAX]
+        ann = [a for a in data.get("annonces_simulees", []) if a["prix"] <= config.budget(key)]
         if not ann:
             return AgentDecision(analyse_marche="Rien dans le budget cette semaine (mode test).", propositions=[], note_pour_plus_tard="")
         decote = lambda a: 1 - a["prix"] / (a["surface_m2"] * meds[a["commune_insee"]])

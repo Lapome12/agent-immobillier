@@ -22,6 +22,8 @@ CATEGORIES = {
     "pas_chere": "La moins chère : le ticket d'entrée le plus bas qui reste un placement sain",
     "bon_plan": "Le bon plan : la meilleure affaire du moment (prix nettement sous le marché, potentiel)",
     "choix_agent": "Au choix de l'agent : ce qu'il juge le plus intéressant, selon sa stratégie",
+    "parfait": "Le bien parfait : le meilleur plan absolu, qui coche toutes les cases (prix, emplacement, potentiel, "
+               "dossier solide). Facultatif, réservé aux agents qui y ont droit : seulement si tu en trouves un",
 }
 ORDRE = ["chere", "pas_chere", "bon_plan", "choix_agent", "choix_agent"]
 
@@ -79,7 +81,6 @@ AGENTS = {
                      "avec un enneigement fiable et une activité l'été",
         "communes": STATIONS,
         "loyer_m2": (10.0, 32.0),
-        "prix_suspect": 0.2,   # granges et ruines : une forte décote sur la médiane DVF est normale
     },
     "giens": {
         "name": "Lou",
@@ -104,11 +105,13 @@ AGENTS = {
                    "Il connaît les règles d'urbanisme de montagne (changement de destination, PLU, loi Montagne).",
         "zone": "la moyenne et haute montagne, dans ou à proximité immédiate des stations de ski réputées et "
                 "situées en altitude (domaines au-dessus de 1 800 m environ) : Tarentaise, Haute-Maurienne, Oisans, "
-                "Briançonnais, Queyras et vallée de Chamonix",
+                "Briançonnais, Queyras et vallée de Chamonix. Les biens doivent être proches des pistes : idéalement skis aux "
+                "pieds ou à pied des remontées, au pire à 10 minutes en voiture ou navette d'un domaine ; écarte les "
+                "villages de fond de vallée éloignés",
         "strategie": "uniquement des biens À RÉNOVER : vieilles granges, fermes, maisons de village, chalets ou "
                      "appartements anciens nécessitant de vrais travaux, achetés sous le prix du marché avec un fort "
                      "potentiel après rénovation (location saisonnière ou revente). Aucun bien en bon état. Chiffre les "
-                     "travaux, précise l'altitude, la distance aux pistes, et vérifie qu'une grange est bien habitable "
+                     "travaux, précise l'altitude et la distance aux pistes, et vérifie qu'une grange est bien habitable "
                      "ou transformable (risque de changement de destination refusé)",
         "communes": {
             "73054": "Bourg-Saint-Maurice (Les Arcs)", "73285": "Séez", "73323": "Villaroger",
@@ -123,6 +126,9 @@ AGENTS = {
             "74056": "Chamonix-Mont-Blanc",
         },
         "loyer_m2": (10.0, 32.0),
+        "prix_suspect": 0.2,   # granges et ruines : une forte décote sur la médiane DVF est normale
+        "budget_max": 200_000.0,
+        "parfait": True,       # 6e proposition facultative « parfait »
     },
     "renovation": {
         "name": "Inès",
@@ -137,6 +143,11 @@ AGENTS = {
         "loyer_m2": (9.0, 30.0),
     },
 }
+
+
+def budget(key):
+    """Budget max par bien pour cet agent (150 000 € sauf exception)."""
+    return AGENTS[key].get("budget_max", BUDGET_MAX)
 
 
 def display(key):

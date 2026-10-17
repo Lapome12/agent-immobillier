@@ -13,7 +13,7 @@ les plus intéressants pour investir, avec un **budget maximum de 150 000 € pa
 | 🏙️ **Chloé** | Agente Grenoble | Grenoble, Saint-Martin-d'Hères, Échirolles, Meylan |
 | ⛷️ **Bastien** | Agent stations de ski | Chamrousse, Alpe d'Huez, Les Deux Alpes, Villard-de-Lans, Les Belleville, Tignes |
 | 🏝️ **Lou** | Agente presqu'île de Giens, Mont des Oiseaux et Carqueiranne | L'Almanarre, Le Port, Les Pesquiers, La Capte, Le Pousset, Giens, La Madrague, La Tour Fondue, Mont des Oiseaux (Hyères) et Carqueiranne |
-| 🎯 **Gaspard** | Sniper montagne à rénover | Uniquement des biens à rénover (granges, fermes, maisons de village) dans ou près des stations d'altitude : Tarentaise, Haute-Maurienne, Oisans, Briançonnais, Queyras, Chamonix |
+| 🎯 **Gaspard** | Sniper montagne à rénover | Budget 200 000 €, + une 6e proposition « parfait » s'il trouve le meilleur plan. Uniquement des biens à rénover proches des pistes (granges, fermes, maisons de village) dans ou près des stations d'altitude : Tarentaise, Haute-Maurienne, Oisans, Briançonnais, Queyras, Chamonix |
 | 🔨 **Inès** | Agente biens à rénover | Biens à forte décote (DPE F/G, travaux) sur les trois territoires |
 
 Noms, personnalités, communes et fourchettes de loyers se changent dans `immo/config.py`

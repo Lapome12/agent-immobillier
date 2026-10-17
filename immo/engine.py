@@ -55,14 +55,16 @@ class Fonds:
         t = str(o.get("type_bien", "")).lower()
         o["type_bien"] = "maison" if "maison" in t or "villa" in t or "chalet" in t else "appartement"
         o["categorie"] = o.get("categorie") if o.get("categorie") in config.CATEGORIES else "choix_agent"
+        if o["categorie"] == "parfait" and not config.AGENTS[key].get("parfait"):
+            o["categorie"] = "choix_agent"
         if c not in config.AGENTS[key]["communes"]:
             motifs.append("commune hors zone")
         surface, prix = float(o.get("surface_m2") or 0), float(o.get("prix") or 0)
         travaux = max(0.0, float(o.get("travaux_estimes") or 0))
         if not (9 <= surface <= 1000) or prix <= 0:
             motifs.append("surface ou prix invalide")
-        if prix > config.BUDGET_MAX:
-            motifs.append(f"hors budget ({eur(prix)} > {eur(config.BUDGET_MAX)})")
+        if prix > config.budget(key):
+            motifs.append(f"hors budget ({eur(prix)} > {eur(config.budget(key))})")
         if not str(o.get("url", "")).startswith("http"):
             motifs.append("pas de lien vers l'annonce")
         if c not in toutes_communes() or surface <= 0 or prix <= 0:
@@ -117,7 +119,7 @@ class Fonds:
             marche[c] = {"nom": nom, **s, "ventes_recentes": self.marche.ventes_recentes(c, 3)}
         precedentes = [{"titre": p.get("titre"), "url": p.get("url"), "note": p.get("note"), "verdict": p.get("verdict"),
                         "correction": p.get("correction")} for p in st["propositions"]]
-        data = {"date": self.marche.label(), "budget_max": config.BUDGET_MAX, "marche": marche,
+        data = {"date": self.marche.label(), "budget_max": config.budget(key), "marche": marche,
                 "tes_propositions_precedentes": precedentes}
         sim = self.marche.annonces_simulees(key)
         if sim:
@@ -148,7 +150,7 @@ class Fonds:
             if err:
                 log.append(f"**{name}** : {err} (propositions de la semaine précédente conservées)\n")
                 continue
-            props = [self.evaluer(key, o.model_dump()) for o in d.propositions[:len(config.ORDRE)]]
+            props = [self.evaluer(key, o.model_dump()) for o in d.propositions[:len(config.ORDRE) + bool(config.AGENTS[key].get("parfait"))]]
             for p in props:
                 p["round"], p["date"] = self.state["round"], self.marche.label()
             st["propositions"], st["analyse"], st["notes"] = props, d.analyse_marche, d.note_pour_plus_tard
@@ -174,7 +176,7 @@ class Fonds:
         prompt = (f"Revue de la semaine {self.state['round']} ({self.marche.label()}).\n"
                   f"Classement avant cette revue :\n{self.leaderboard_text()}\n\n"
                   f"Analyses des agents :\n{analyses}\n\n"
-                  f"Propositions à corriger (identifiants d'agents : {', '.join(props)}, numéros 0 à 4) :\n"
+                  f"Propositions à corriger (identifiants d'agents : {', '.join(props)}, numéros à partir de 0) :\n"
                   f"DONNÉES_JSON:{json.dumps({'propositions': props}, ensure_ascii=False)}")
         try:
             d = self.brain.manager(prompt, props)
