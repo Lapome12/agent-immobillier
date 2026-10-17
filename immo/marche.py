@@ -207,7 +207,7 @@ class MarcheSimule(Marche):
             surface = round(rng.uniform(18, 110))
             # prix demandé / prix du marché : le plus souvent proche du marché, parfois une affaire, parfois un piège
             ratio = rng.uniform(0.3, 0.4) if rng.random() < 0.1 else rng.gauss(0.97, 0.12)
-            renover = key == "renovation" or rng.random() < 0.25
+            renover = key in ("renovation", "sniper") or rng.random() < 0.25
             travaux = round(surface * rng.uniform(300, 1200), -2) if renover else 0
             if renover:
                 ratio *= 0.8

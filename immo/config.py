@@ -94,6 +94,35 @@ AGENTS = {
         "communes": {**HYERES, "83034": "Carqueiranne"},
         "loyer_m2": (12.0, 28.0),
     },
+    "sniper": {
+        "name": "Gaspard",
+        "role": "Sniper montagne à rénover",
+        "emoji": "🎯",
+        "persona": "Ancien charpentier savoyard devenu chasseur de biens, il ne tire qu'à coup sûr : une vieille grange, "
+                   "un chalet d'alpage ou une maison de village à retaper, au pied d'une grande station d'altitude. "
+                   "Il connaît les règles d'urbanisme de montagne (changement de destination, PLU, loi Montagne).",
+        "zone": "la moyenne et haute montagne, dans ou à proximité immédiate des stations de ski réputées et "
+                "situées en altitude (domaines au-dessus de 1 800 m environ) : Tarentaise, Haute-Maurienne, Oisans, "
+                "Briançonnais, Queyras et vallée de Chamonix",
+        "strategie": "uniquement des biens À RÉNOVER : vieilles granges, fermes, maisons de village, chalets ou "
+                     "appartements anciens nécessitant de vrais travaux, achetés sous le prix du marché avec un fort "
+                     "potentiel après rénovation (location saisonnière ou revente). Aucun bien en bon état. Chiffre les "
+                     "travaux, précise l'altitude, la distance aux pistes, et vérifie qu'une grange est bien habitable "
+                     "ou transformable (risque de changement de destination refusé)",
+        "communes": {
+            "73054": "Bourg-Saint-Maurice (Les Arcs)", "73285": "Séez", "73323": "Villaroger",
+            "73232": "Sainte-Foy-Tarentaise", "73304": "Val-d'Isère", "73296": "Tignes",
+            "73197": "Peisey-Nancroix", "73142": "Landry", "73150": "La Plagne Tarentaise",
+            "73227": "Courchevel", "73015": "Les Allues (Méribel)", "73257": "Les Belleville (Val Thorens, Les Menuires)",
+            "73290": "Val-Cenis", "73047": "Bonneval-sur-Arc", "73306": "Valloire",
+            "38191": "Huez (Alpe d'Huez)", "38253": "Les Deux Alpes", "05063": "La Grave", "05181": "Villar-d'Arêne",
+            "05023": "Briançon", "05133": "Saint-Chaffrey", "05161": "La Salle-les-Alpes",
+            "05079": "Le Monêtier-les-Bains", "05085": "Montgenèvre", "05093": "Névache",
+            "05177": "Vars", "05157": "Saint-Véran", "05077": "Molines-en-Queyras",
+            "74056": "Chamonix-Mont-Blanc",
+        },
+        "loyer_m2": (10.0, 32.0),
+    },
     "renovation": {
         "name": "Inès",
         "role": "Agente biens à rénover",

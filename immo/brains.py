@@ -84,7 +84,7 @@ SOURCE_WEB = ("Cherche des annonces en ligne actuellement en vente (leboncoin, s
 SOURCE_FOURNIE = ("Tu travailles uniquement à partir des annonces fournies dans le message. "
                   "N'invente jamais une annonce : sans annonce fournie, ne présente aucune proposition.")
 
-MANAGER_SYSTEM = """Tu es {name}, directrice d'investissement d'une équipe de 5 agents de recherche immobilière IA
+MANAGER_SYSTEM = """Tu es {name}, directrice d'investissement d'une équipe de 6 agents de recherche immobilière IA
 en compétition, chacun sur un secteur : {team}. Ils ne font aucun achat : ils proposent chacun 5 biens en vente
 (budget max {budget} € par bien) dans un but d'investissement pour Eliott.
 Ta personnalité : {persona}
@@ -202,7 +202,7 @@ class ClaudeCodeBrain(ClaudeBrain):
 # ---------- Cerveau local (Ollama, 100 % sur ton ordinateur) ----------
 
 class OllamaBrain(ClaudeBrain):
-    """Fait tourner Hélène et les 5 agents avec un modèle installé localement via Ollama.
+    """Fait tourner Hélène et les 6 agents avec un modèle installé localement via Ollama.
     Pas de recherche web : les agents travaillent sur les annonces déposées dans annonces/."""
 
     web = False
