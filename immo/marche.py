@@ -64,8 +64,10 @@ class MarcheDVF(Marche):
 
     URL = "https://files.data.gouv.fr/geo-dvf/latest/csv/{annee}/communes/{dep}/{insee}.csv"
 
-    def __init__(self, cache_dir="cache/dvf", annees=4):
+    def __init__(self, cache_dir="cache/dvf", annees=4, medianes_secours=None):
         self.cache = Path(cache_dir)
+        self.secours = medianes_secours or {}  # médianes du dernier tour, si data.gouv.fr est en panne
+        self.echecs = 0                        # téléchargements ratés d'affilée
         self.ventes = {}
         an = date.today().year
         for insee in toutes_communes():
@@ -74,7 +76,7 @@ class MarcheDVF(Marche):
                 rows += self._ventes(insee, y)
             self.ventes[insee] = sorted(rows, key=lambda r: r["date"])
         vides = [toutes_communes()[i] for i, v in self.ventes.items() if not v]
-        if len(vides) == len(self.ventes):
+        if len(vides) == len(self.ventes) and not self.secours:
             raise RuntimeError("Impossible de télécharger les ventes DVF (réseau ?)")
         if vides:
             print(f"Aucune vente DVF trouvée pour : {', '.join(vides)}")
@@ -88,10 +90,11 @@ class MarcheDVF(Marche):
             return f.read_text(encoding="utf-8")
         url = self.URL.format(annee=annee, dep=insee[:2], insee=insee)
         text = None
-        for essai in range(4):  # data.gouv.fr renvoie parfois des 503 passagers
+        for essai in range(4 if self.echecs < 3 else 0):  # 503 passagers ; après 3 échecs d'affilée, site considéré en panne
             try:
                 with urllib.request.urlopen(url, timeout=60) as r:
                     text = r.read().decode("utf-8")
+                self.echecs = 0
                 break
             except urllib.error.HTTPError as e:
                 if e.code == 404:  # année pas (encore) publiée
@@ -101,7 +104,9 @@ class MarcheDVF(Marche):
                 erreur = e
             time.sleep(5 * 2 ** essai)
         if text is None:  # serveur indisponible : ancien cache s'il existe, sinon commune sans données
-            print(f"DVF indisponible pour {insee} ({annee}) : {erreur}")
+            if self.echecs < 3:
+                self.echecs += 1
+                print(f"DVF indisponible pour {insee} ({annee}) : {erreur}")
             return f.read_text(encoding="utf-8") if f.exists() else ""
         f.parent.mkdir(parents=True, exist_ok=True)
         f.write_text(text, encoding="utf-8")
@@ -144,7 +149,7 @@ class MarcheDVF(Marche):
             return self._stats[insee]
         ventes = self.ventes.get(insee, [])
         if not ventes:
-            s = {"mediane_m2": self._mediane_zone(insee), "ventes_12m": 0, "evolution_1an": 0.0,
+            s = {"mediane_m2": self.secours.get(insee) or self._mediane_zone(insee), "ventes_12m": 0, "evolution_1an": 0.0,
                  "par_type": {}, "derniere_vente": None}
             self._stats[insee] = s
             return s

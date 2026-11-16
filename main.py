@@ -84,7 +84,9 @@ def main():
     if a.mode == "sim":
         marche = MarcheSimule(seed=a.seed)
     else:
-        marche = MarcheDVF()
+        sauvegarde = Path(state_dir) / "state.json"
+        secours = json.loads(sauvegarde.read_text(encoding="utf-8")).get("medianes", {}) if sauvegarde.exists() else {}
+        marche = MarcheDVF(medianes_secours=secours)
 
     fonds = Fonds(brain, marche, state_dir)
     if a.mode == "live":
