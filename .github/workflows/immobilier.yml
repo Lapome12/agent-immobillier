@@ -53,6 +53,7 @@ jobs:
       - name: Tour de prospection (investissement fictif)
         run: python main.py live
         env:
+          PYTHONUNBUFFERED: "1"   # journal visible en direct dans GitHub Actions
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       - name: Sauvegarder l'état de la partie
