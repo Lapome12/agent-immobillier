@@ -7,6 +7,7 @@ import csv
 import io
 import random
 import statistics
+import time
 import urllib.error
 import urllib.request
 from datetime import date, datetime, timedelta, timezone
@@ -86,13 +87,22 @@ class MarcheDVF(Marche):
                            datetime.now().timestamp() - f.stat().st_mtime < 30 * 86400):
             return f.read_text(encoding="utf-8")
         url = self.URL.format(annee=annee, dep=insee[:2], insee=insee)
-        try:
-            with urllib.request.urlopen(url, timeout=60) as r:
-                text = r.read().decode("utf-8")
-        except urllib.error.HTTPError as e:
-            if e.code == 404:  # année pas (encore) publiée
-                return ""
-            raise
+        text = None
+        for essai in range(4):  # data.gouv.fr renvoie parfois des 503 passagers
+            try:
+                with urllib.request.urlopen(url, timeout=60) as r:
+                    text = r.read().decode("utf-8")
+                break
+            except urllib.error.HTTPError as e:
+                if e.code == 404:  # année pas (encore) publiée
+                    return ""
+                erreur = e
+            except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+                erreur = e
+            time.sleep(5 * 2 ** essai)
+        if text is None:  # serveur indisponible : ancien cache s'il existe, sinon commune sans données
+            print(f"DVF indisponible pour {insee} ({annee}) : {erreur}")
+            return f.read_text(encoding="utf-8") if f.exists() else ""
         f.parent.mkdir(parents=True, exist_ok=True)
         f.write_text(text, encoding="utf-8")
         return text
